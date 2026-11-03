@@ -1,0 +1,16 @@
+# Binaries
+zalo-gateway
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Runtime data
+webhooks.json
+*.log
+.env
+
+# OS
+.DS_Store
+Thumbs.db

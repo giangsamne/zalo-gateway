@@ -1,0 +1,29 @@
+# Zalo Gateway - LLM & AI Agent Context
+> High-performance Go native bridge, web client, and automation gateway for Zalo personal accounts.
+
+## Core Capabilities
+- REST API for sending and querying Zalo messages.
+- Real-time WebSockets on /ws for bidirectional chat events.
+- Outbound Webhooks with HMAC-SHA256 signatures for n8n, Make, Flowise, and autonomous agent loops.
+- Multi-session Web UI enabling unlimited concurrent browser connections without Zalo session logout.
+
+## Base URLs
+- Local: http://localhost:54321
+- REST API Base: http://localhost:54321/api/v1
+- WebSocket: ws://localhost:54321/ws
+- OpenAPI 3.0: http://localhost:54321/api/v1/openapi.json
+
+## Quick Actions for AI Agents
+1. Send Message:
+   POST /api/v1/send
+   Headers: Content-Type: application/json
+   Body: {"thread_id": "<user_or_group_id>", "message": "<content>", "is_group": false}
+
+2. Read Recent Messages:
+   GET /api/v1/messages?limit=10
+
+3. List Threads:
+   GET /api/v1/threads
+
+4. Check Connection:
+   GET /api/v1/status

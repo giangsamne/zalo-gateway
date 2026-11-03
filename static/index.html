@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zalo Gateway - Multi-Session Web & Automation Hub</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <header class="sidebar-header">
+        <div class="brand">
+          <div class="brand-logo">⚡</div>
+          <div class="brand-info">
+            <h1>Zalo Gateway</h1>
+            <div class="status-badge" id="status-badge">
+              <span class="dot"></span>
+              <span class="status-text">Đang kết nối...</span>
+            </div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" id="btn-webhooks" title="Cấu hình Webhooks">🪝</button>
+          <button class="icon-btn" id="btn-docs" title="Tài liệu API & Agent">📖</button>
+        </div>
+      </header>
+
+      <div class="search-box">
+        <input type="text" id="search-threads" placeholder="Tìm kiếm hội thoại...">
+      </div>
+
+      <div class="thread-list" id="thread-list">
+        <div class="empty-state">Đang tải danh sách hội thoại...</div>
+      </div>
+
+      <footer class="sidebar-footer">
+        <div class="gateway-stats">
+          <span>Port: <strong id="stat-port">54321</strong></span>
+          <span>Webhooks: <strong id="stat-webhooks">0</strong></span>
+          <span>Sockets: <strong id="stat-sockets">0</strong></span>
+        </div>
+      </footer>
+    </aside>
+
+    <!-- Chat Area -->
+    <main class="chat-area">
+      <header class="chat-header" id="chat-header">
+        <div class="chat-title-info">
+          <div class="avatar" id="active-avatar">💬</div>
+          <div>
+            <h2 id="active-thread-name">Chọn một hội thoại để bắt đầu</h2>
+            <div class="thread-sub" id="active-thread-sub">Hỗ trợ đa phiên đăng nhập không lo bị đăng xuất</div>
+          </div>
+        </div>
+        <div class="chat-actions" id="chat-actions" style="display:none;">
+          <span class="badge" id="badge-thread-id">ID: -</span>
+          <span class="badge badge-accent" id="badge-thread-type">Cá nhân</span>
+        </div>
+      </header>
+
+      <div class="message-feed" id="message-feed">
+        <div class="welcome-banner">
+          <div class="welcome-icon">🚀</div>
+          <h3>Chào mừng đến với Zalo Gateway</h3>
+          <p>Hệ thống cổng trung gian duy trì kết nối Zalo cá nhân 24/7. Bạn có thể mở link này trên nhiều máy tính cùng lúc hoặc dùng API/Webhook cho các công cụ tự động hóa (n8n, Make, AI Agent).</p>
+        </div>
+      </div>
+
+      <footer class="chat-input-area" id="chat-input-area" style="display:none;">
+        <form id="message-form">
+          <textarea id="message-input" placeholder="Nhập tin nhắn... (Nhấn Enter để gửi, Shift+Enter xuống dòng)" rows="1"></textarea>
+          <button type="submit" id="btn-send" class="btn-primary">
+            <span>Gửi</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </form>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Webhooks Modal -->
+  <div class="modal-overlay" id="modal-webhooks">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🪝 Quản lý Webhooks (Tự động hóa)</h3>
+        <button class="close-btn" data-close="modal-webhooks">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Đăng ký URL để tự động nhận tin nhắn Zalo gửi sang <strong>n8n</strong>, <strong>Make</strong>, <strong>Telegram Bot</strong> hoặc ứng dụng riêng của bạn.</p>
+
+        <form id="webhook-form" class="webhook-form">
+          <div class="form-group">
+            <label>Webhook URL (Endpoint nhận POST JSON)</label>
+            <input type="url" id="wh-url" placeholder="https://your-n8n.com/webhook/zalo" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Secret Key (Tùy chọn - để ký HMAC-SHA256)</label>
+              <input type="text" id="wh-secret" placeholder="my-super-secret-key">
+            </div>
+            <div class="form-group">
+              <label>Sự kiện (Events)</label>
+              <select id="wh-events">
+                <option value="*">Tất cả sự kiện (*)</option>
+                <option value="message.received">Chỉ tin nhắn đến (message.received)</option>
+                <option value="message.sent">Chỉ tin nhắn đi (message.sent)</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">➕ Thêm Webhook</button>
+        </form>
+
+        <h4 style="margin-top: 24px; margin-bottom: 12px;">Danh sách Webhook đang kích hoạt</h4>
+        <div class="webhook-list" id="webhook-list">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Docs Modal -->
+  <div class="modal-overlay" id="modal-docs">
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <h3>📖 Tài liệu Kỹ thuật & API cho Tự động hóa / AI Agent</h3>
+        <button class="close-btn" data-close="modal-docs">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="docs-tabs">
+          <button class="tab-btn active" data-tab="tab-curl">cURL / HTTP</button>
+          <button class="tab-tab" data-tab="tab-n8n">n8n / Make</button>
+          <button class="tab-tab" data-tab="tab-agent">AI Agent / Antigravity</button>
+          <button class="tab-tab" data-tab="tab-openapi">OpenAPI Spec</button>
+        </div>
+
+        <div class="tab-content" id="tab-curl">
+          <h4>1. Gửi tin nhắn qua REST API</h4>
+          <pre><code>curl -X POST http://localhost:54321/api/v1/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "thread_id": "1842365959181420185",
+    "message": "Xin chào! Đây là tin nhắn tự động từ Zalo Gateway.",
+    "is_group": false
+  }'</code></pre>
+
+          <h4>2. Lấy danh sách tin nhắn</h4>
+          <pre><code>curl http://localhost:54321/api/v1/messages?limit=20</code></pre>
+
+          <h4>3. Kiểm tra trạng thái Gateway</h4>
+          <pre><code>curl http://localhost:54321/api/v1/status</code></pre>
+        </div>
+
+        <div class="tab-content" id="tab-n8n" style="display:none;">
+          <h4>Tích hợp n8n Workflow</h4>
+          <ol>
+            <li>Tạo một node <strong>Webhook</strong> (HTTP Method: POST) trong n8n.</li>
+            <li>Copy Test/Production Webhook URL từ n8n.</li>
+            <li>Vào tab <strong>Quản lý Webhooks</strong> trên Zalo Gateway và dán URL vào.</li>
+            <li>Mỗi khi có tin nhắn Zalo gửi đến, n8n sẽ nhận ngay payload JSON chứa:
+              <pre><code>{
+  "event": "message.received",
+  "timestamp": 1793718000000,
+  "data": {
+    "id": "8448...",
+    "threadId": "1842365959181420185",
+    "senderName": "Nguyễn Văn A",
+    "content": "Chào bạn, cho mình hỏi giá sản phẩm...",
+    "isGroup": false
+  }
+}</code></pre>
+            </li>
+          </ol>
+        </div>
+
+        <div class="tab-content" id="tab-agent" style="display:none;">
+          <h4>Dành cho AI Agent / LLMs</h4>
+          <p>Tài liệu chuẩn hóa cho Agent được tự động phục vụ tại:</p>
+          <ul>
+            <li><a href="/agent-guide.md" target="_blank"><code>/agent-guide.md</code></a> - Hướng dẫn chi tiết bằng Markdown cho Agent.</li>
+            <li><a href="/llms.txt" target="_blank"><code>/llms.txt</code></a> - File ngữ cảnh chuẩn AI LLMs.</li>
+            <li><a href="/api/v1/openapi.json" target="_blank"><code>/api/v1/openapi.json</code></a> - Đặc tả OpenAPI 3.0 đầy đủ.</li>
+          </ul>
+        </div>
+
+        <div class="tab-content" id="tab-openapi" style="display:none;">
+          <h4>OpenAPI 3.0 Raw Specification</h4>
+          <p>Bạn có thể import đường dẫn <a href="/api/v1/openapi.json" target="_blank"><code>http://localhost:54321/api/v1/openapi.json</code></a> vào Swagger Editor, Postman hoặc Custom GPT Actions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Zalo Gateway API",
+    "description": "High-performance Go Native API & Automation Hub for Zalo personal accounts. Enables multi-session web access, webhooks, and automation for AI agents (Antigravity, Claude, AutoGen, n8n, Make).",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Giang3DLab",
+      "url": "https://github.com/giangsamne/zalo-gateway"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:54321",
+      "description": "Local Zalo Gateway"
+    }
+  ],
+  "paths": {
+    "/api/v1/status": {
+      "get": {
+        "summary": "Check Gateway Status & Connection Metrics",
+        "description": "Returns runtime status, connection state to Zalo, uptime, message statistics, and active webhooks.",
+        "responses": {
+          "200": {
+            "description": "Gateway status object"
+          }
+        }
+      }
+    },
+    "/api/v1/threads": {
+      "get": {
+        "summary": "List Conversation Threads",
+        "description": "Returns all active chat threads sorted by most recent activity with participant details and unread counts.",
+        "responses": {
+          "200": {
+            "description": "List of active threads"
+          }
+        }
+      }
+    },
+    "/api/v1/messages": {
+      "get": {
+        "summary": "Query Messages",
+        "description": "Fetch recent messages across all chats or filtered by a specific thread ID.",
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Optional thread ID to filter"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 },
+            "description": "Maximum number of messages to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of messages"
+          }
+        }
+      }
+    },
+    "/api/v1/send": {
+      "post": {
+        "summary": "Send a Message",
+        "description": "Sends a message to an individual or group thread on Zalo.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["thread_id", "message"],
+                "properties": {
+                  "thread_id": { "type": "string", "example": "1842365959181420185" },
+                  "message": { "type": "string", "example": "Hello from automation!" },
+                  "is_group": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Send message result"
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks": {
+      "get": {
+        "summary": "List Webhooks",
+        "responses": {
+          "200": {
+            "description": "List of active webhooks"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a new Webhook",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string" },
+                  "secret": { "type": "string" },
+                  "events": { "type": "array", "items": { "type": "string" } }
+                },
+                "required": ["url"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook registered successfully"
+          }
+        }
+      }
+    }
+  }
+}
