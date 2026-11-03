@@ -132,6 +132,37 @@ func main() {
 		_ = json.NewEncoder(w).Encode(st)
 	})
 
+	// Login & QR Code endpoints
+	mux.HandleFunc("/api/v1/login/qr", func(w http.ResponseWriter, r *http.Request) {
+		enableCORS(w)
+		if r.Method == "OPTIONS" {
+			return
+		}
+
+		if r.Method == "GET" {
+			qr, err := bridge.GetQRStatus()
+			if err != nil {
+				w.WriteHeader(http.StatusBadGateway)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(qr)
+			return
+		}
+
+		if r.Method == "POST" {
+			force := r.URL.Query().Get("force") == "true"
+			qr, err := bridge.StartQRLogin(force)
+			if err != nil {
+				w.WriteHeader(http.StatusBadGateway)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(qr)
+			return
+		}
+
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	})
+
 	mux.HandleFunc("/api/v1/threads", func(w http.ResponseWriter, r *http.Request) {
 		enableCORS(w)
 		if r.Method == "OPTIONS" {

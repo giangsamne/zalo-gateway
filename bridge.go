@@ -25,6 +25,7 @@ type ZaloBridge struct {
 	webhookMgr     *WebhookManager
 	httpClient     *http.Client
 	startTime      time.Time
+	lastQRStatus   string
 }
 
 func NewZaloBridge(daemonURL string, webhookMgr *WebhookManager) *ZaloBridge {
@@ -89,6 +90,20 @@ func (b *ZaloBridge) syncStatus() {
 		if changed && b.hub != nil {
 			b.hub.Broadcast("status_updated", b.GetStatus())
 			b.webhookMgr.Dispatch("status.changed", b.GetStatus())
+		}
+	}
+
+	// If not connected, check QR updates
+	if !b.connected {
+		if qr, err := b.GetQRStatus(); err == nil {
+			b.mu.Lock()
+			qrChanged := b.lastQRStatus != qr.Status
+			b.lastQRStatus = qr.Status
+			b.mu.Unlock()
+
+			if qrChanged && b.hub != nil {
+				b.hub.Broadcast("qr_updated", qr)
+			}
 		}
 	}
 }
@@ -264,4 +279,63 @@ func (b *ZaloBridge) GetStatus() GatewayStatus {
 		DaemonEndpoint: b.daemonURL,
 		Version:        "1.0.0",
 	}
+}
+
+type daemonQRResponse struct {
+	Status        string      `json:"status"`
+	QRCode        string      `json:"qrCode"`
+	QRImageBase64 string      `json:"qrImageBase64"`
+	ScannedUser   interface{} `json:"scannedUser"`
+	UpdatedAt     int64       `json:"updatedAt"`
+	Error         string      `json:"error"`
+}
+
+func (b *ZaloBridge) GetQRStatus() (*QRLoginStatus, error) {
+	resp, err := b.httpClient.Get(fmt.Sprintf("%s/qr", b.daemonURL))
+	if err != nil {
+		return &QRLoginStatus{Status: "error", Error: err.Error()}, err
+	}
+	defer resp.Body.Close()
+
+	var d daemonQRResponse
+	if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
+		return &QRLoginStatus{Status: "error", Error: err.Error()}, err
+	}
+	return &QRLoginStatus{
+		Status:        d.Status,
+		QRCode:        d.QRCode,
+		QRImageBase64: d.QRImageBase64,
+		ScannedUser:   d.ScannedUser,
+		UpdatedAt:     d.UpdatedAt,
+		Error:         d.Error,
+	}, nil
+}
+
+func (b *ZaloBridge) StartQRLogin(force bool) (*QRLoginStatus, error) {
+	url := fmt.Sprintf("%s/login/start", b.daemonURL)
+	if force {
+		url += "?force=true"
+	}
+	resp, err := b.httpClient.Post(url, "application/json", nil)
+	if err != nil {
+		return &QRLoginStatus{Status: "error", Error: err.Error()}, err
+	}
+	defer resp.Body.Close()
+
+	var d daemonQRResponse
+	if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
+		return &QRLoginStatus{Status: "error", Error: err.Error()}, err
+	}
+	qr := &QRLoginStatus{
+		Status:        d.Status,
+		QRCode:        d.QRCode,
+		QRImageBase64: d.QRImageBase64,
+		ScannedUser:   d.ScannedUser,
+		UpdatedAt:     d.UpdatedAt,
+		Error:         d.Error,
+	}
+	if b.hub != nil {
+		b.hub.Broadcast("qr_updated", qr)
+	}
+	return qr, nil
 }

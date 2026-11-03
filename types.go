@@ -76,6 +76,16 @@ type GatewayStatus struct {
 	Version         string `json:"version"`
 }
 
+// QRLoginStatus represents real-time Zalo QR login state.
+type QRLoginStatus struct {
+	Status        string      `json:"status"` // "idle", "generating", "qr_ready", "scanned", "expired", "declined", "success"
+	QRCode        string      `json:"qr_code,omitempty"`
+	QRImageBase64 string      `json:"qr_image_base64,omitempty"`
+	ScannedUser   interface{} `json:"scanned_user,omitempty"`
+	UpdatedAt     int64       `json:"updated_at"`
+	Error         string      `json:"error,omitempty"`
+}
+
 // WSMessage is the transport envelope for WebSocket frames.
 type WSMessage struct {
 	Type string      `json:"type"` // "message_received", "message_sent", "status_updated", "init"

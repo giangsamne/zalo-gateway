@@ -23,6 +23,7 @@
           </div>
         </div>
         <div class="header-actions">
+          <button class="btn-login-header" id="btn-open-login" title="Đăng nhập Zalo">🔑 Đăng nhập</button>
           <button class="icon-btn" id="btn-webhooks" title="Cấu hình Webhooks">🪝</button>
           <button class="icon-btn" id="btn-docs" title="Tài liệu API & Agent">📖</button>
         </div>
@@ -30,6 +31,14 @@
 
       <div class="search-box">
         <input type="text" id="search-threads" placeholder="Tìm kiếm hội thoại...">
+      </div>
+
+      <div id="login-banner" class="login-banner" style="display:none;">
+        <div class="login-banner-text">
+          <span>⚠️ Zalo chưa đăng nhập</span>
+          <small>Quét mã QR để kích hoạt nhắn tin</small>
+        </div>
+        <button id="btn-banner-login" class="btn-primary btn-sm">Quét QR</button>
       </div>
 
       <div class="thread-list" id="thread-list">
@@ -188,6 +197,53 @@
         <div class="tab-content" id="tab-openapi" style="display:none;">
           <h4>OpenAPI 3.0 Raw Specification</h4>
           <p>Bạn có thể import đường dẫn <a href="/api/v1/openapi.json" target="_blank"><code>http://localhost:54321/api/v1/openapi.json</code></a> vào Swagger Editor, Postman hoặc Custom GPT Actions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Login Modal -->
+  <div class="modal-overlay" id="modal-login">
+    <div class="modal-card modal-qr">
+      <div class="modal-header">
+        <h3>📲 Đăng nhập Zalo bằng mã QR</h3>
+        <button class="close-btn" data-close="modal-login">&times;</button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="modal-desc">Mở ứng dụng Zalo trên điện thoại, bấm biểu tượng quét mã QR để đăng nhập vào Gateway.</p>
+
+        <div class="qr-container">
+          <div class="qr-box" id="qr-box">
+            <div class="qr-loading" id="qr-loading">
+              <div class="spinner"></div>
+              <span id="qr-loading-text">Đang tải mã QR mới nhất...</span>
+            </div>
+            <img id="qr-img" class="qr-image" style="display:none;" alt="Mã QR Zalo">
+          </div>
+          <div class="qr-status-pill waiting" id="qr-status-pill">
+            <span class="dot"></span>
+            <span id="qr-status-text">Đang chờ quét mã...</span>
+          </div>
+        </div>
+
+        <div class="qr-instructions">
+          <div class="step-item">
+            <span class="step-num">1</span>
+            <span>Mở app <strong>Zalo</strong> trên điện thoại</span>
+          </div>
+          <div class="step-item">
+            <span class="step-num">2</span>
+            <span>Chọn biểu tượng <strong>Quét QR</strong> góc trên</span>
+          </div>
+          <div class="step-item">
+            <span class="step-num">3</span>
+            <span>Hướng camera & chọn <strong>Đăng nhập</strong></span>
+          </div>
+        </div>
+
+        <div class="qr-actions">
+          <button id="btn-refresh-qr" class="btn-primary">🔄 Làm mới mã QR</button>
+          <button id="btn-force-qr" class="btn-outline" title="Xóa session cũ và tạo mã mới">⚡ Đăng nhập tài khoản khác</button>
         </div>
       </div>
     </div>

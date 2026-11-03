@@ -22,6 +22,19 @@ const statusBadgeEl = document.getElementById("status-badge");
 const statPortEl = document.getElementById("stat-port");
 const statWebhooksEl = document.getElementById("stat-webhooks");
 const statSocketsEl = document.getElementById("stat-sockets");
+const loginBannerEl = document.getElementById("login-banner");
+const btnOpenLoginEl = document.getElementById("btn-open-login");
+const btnBannerLoginEl = document.getElementById("btn-banner-login");
+const modalLoginEl = document.getElementById("modal-login");
+const qrImgEl = document.getElementById("qr-img");
+const qrLoadingEl = document.getElementById("qr-loading");
+const qrLoadingTextEl = document.getElementById("qr-loading-text");
+const qrStatusPillEl = document.getElementById("qr-status-pill");
+const qrStatusTextEl = document.getElementById("qr-status-text");
+const btnRefreshQREl = document.getElementById("btn-refresh-qr");
+const btnForceQREl = document.getElementById("btn-force-qr");
+
+let qrPollTimer = null;
 
 // Init WebSocket
 function connectWebSocket() {
@@ -65,6 +78,10 @@ function handleWSEvent(evt) {
       updateStatus(evt.data);
       break;
 
+    case "qr_updated":
+      renderQRState(evt.data);
+      break;
+
     case "message_received":
     case "message_sent":
       handleNewMessage(evt.data);
@@ -76,9 +93,19 @@ function updateStatus(status) {
   if (status.connected) {
     statusBadgeEl.className = "status-badge online";
     statusBadgeEl.querySelector(".status-text").textContent = "Zalo Đã kết nối";
+    if (loginBannerEl) loginBannerEl.style.display = "none";
+    if (btnOpenLoginEl) {
+      btnOpenLoginEl.textContent = "✓ Đã đăng nhập";
+      btnOpenLoginEl.className = "btn-login-header connected";
+    }
   } else {
     statusBadgeEl.className = "status-badge offline";
     statusBadgeEl.querySelector(".status-text").textContent = "Zalo Chưa đăng nhập";
+    if (loginBannerEl) loginBannerEl.style.display = "flex";
+    if (btnOpenLoginEl) {
+      btnOpenLoginEl.textContent = "🔑 Đăng nhập";
+      btnOpenLoginEl.className = "btn-login-header";
+    }
   }
 
   statPortEl.textContent = status.port || "54321";
@@ -357,6 +384,126 @@ window.deleteWebhook = async (id) => {
     alert("Lỗi xóa: " + err.message);
   }
 };
+
+// ========================
+// QR Login Flow Management
+// ========================
+function openLoginModal() {
+  modalLoginEl.classList.add("open");
+  loadQRCode(false);
+  startQRPoll();
+}
+
+function closeLoginModal() {
+  modalLoginEl.classList.remove("open");
+  stopQRPoll();
+}
+
+function startQRPoll() {
+  stopQRPoll();
+  qrPollTimer = setInterval(async () => {
+    if (!modalLoginEl.classList.contains("open")) {
+      stopQRPoll();
+      return;
+    }
+    try {
+      const res = await fetch("/api/v1/login/qr");
+      if (res.ok) {
+        const qr = await res.json();
+        renderQRState(qr);
+      }
+    } catch (_) {}
+  }, 1500);
+}
+
+function stopQRPoll() {
+  if (qrPollTimer) {
+    clearInterval(qrPollTimer);
+    qrPollTimer = null;
+  }
+}
+
+async function loadQRCode(force = false) {
+  qrLoadingEl.style.display = "flex";
+  qrImgEl.style.display = "none";
+  qrLoadingTextEl.textContent = force ? "Đang tạo phiên mới..." : "Đang tải mã QR mới nhất...";
+  qrStatusPillEl.className = "qr-status-pill waiting";
+  qrStatusTextEl.textContent = "Đang kết nối...";
+
+  try {
+    const endpoint = force ? "/api/v1/login/qr?force=true" : "/api/v1/login/qr";
+    const res = await fetch(endpoint, { method: "POST" });
+    const qr = await res.json();
+    renderQRState(qr);
+  } catch (err) {
+    qrLoadingTextEl.textContent = "Lỗi kết nối máy chủ: " + err.message;
+  }
+}
+
+function renderQRState(qr) {
+  if (!qr) return;
+
+  if (qr.qr_image_base64) {
+    qrImgEl.src = qr.qr_image_base64;
+    qrImgEl.style.display = "block";
+    qrLoadingEl.style.display = "none";
+  }
+
+  switch (qr.status) {
+    case "qr_ready":
+      qrStatusPillEl.className = "qr-status-pill waiting";
+      qrStatusTextEl.textContent = "📲 Vui lòng quét mã QR bằng app Zalo";
+      break;
+
+    case "scanned":
+      qrStatusPillEl.className = "qr-status-pill scanned";
+      const userName = qr.scanned_user ? (qr.scanned_user.display_name || "Zalo") : "bạn";
+      qrStatusTextEl.textContent = `👀 Đã quét bởi ${userName}! Bấm [Đăng nhập] trên đt...`;
+      break;
+
+    case "expired":
+      qrStatusPillEl.className = "qr-status-pill expired";
+      qrStatusTextEl.textContent = "⚠️ Mã QR đã hết hạn - Bấm [Làm mới mã QR]";
+      break;
+
+    case "declined":
+      qrStatusPillEl.className = "qr-status-pill expired";
+      qrStatusTextEl.textContent = "❌ Yêu cầu đăng nhập đã bị từ chối trên điện thoại";
+      break;
+
+    case "success":
+      qrStatusPillEl.className = "qr-status-pill success";
+      qrStatusTextEl.textContent = "✅ Đăng nhập thành công! Đang vào Zalo...";
+      setTimeout(() => {
+        closeLoginModal();
+        fetch("/api/v1/status").then(r => r.json()).then(updateStatus);
+        fetch("/api/v1/threads").then(r => r.json()).then(t => { threads = t; renderThreads(); });
+      }, 1500);
+      break;
+
+    case "generating":
+      qrLoadingEl.style.display = "flex";
+      qrImgEl.style.display = "none";
+      qrLoadingTextEl.textContent = "Đang tạo mã QR mới từ Zalo...";
+      qrStatusPillEl.className = "qr-status-pill waiting";
+      qrStatusTextEl.textContent = "Đang khởi tạo...";
+      break;
+  }
+}
+
+if (btnOpenLoginEl) btnOpenLoginEl.onclick = openLoginModal;
+if (btnBannerLoginEl) btnBannerLoginEl.onclick = openLoginModal;
+if (btnRefreshQREl) btnRefreshQREl.onclick = () => loadQRCode(false);
+if (btnForceQREl) btnForceQREl.onclick = () => {
+  if (confirm("Thao tác này sẽ xóa phiên đăng nhập cũ và tạo mã QR hoàn toàn mới. Tiếp tục?")) {
+    loadQRCode(true);
+  }
+};
+
+// Modal close handler for login modal
+document.querySelectorAll('[data-close="modal-login"]').forEach(btn => {
+  btn.onclick = closeLoginModal;
+});
 
 function escapeHtml(str) {
   if (!str) return "";

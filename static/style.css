@@ -612,3 +612,235 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+/* Header Login Button & Banner */
+.btn-login-header {
+  padding: 6px 12px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.btn-login-header:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
+}
+
+.btn-login-header.connected {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+}
+
+.login-banner {
+  margin: 0 16px 10px 16px;
+  padding: 10px 14px;
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.login-banner-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-banner-text span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #eab308;
+}
+
+.login-banner-text small {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.btn-sm {
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+/* QR Modal */
+.modal-qr {
+  max-width: 440px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 16px 0;
+}
+
+.qr-box {
+  width: 250px;
+  height: 250px;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.qr-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.qr-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #cbd5e1;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.qr-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--bg-tertiary);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 14px;
+}
+
+.qr-status-pill .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.qr-status-pill.waiting .dot {
+  background: #eab308;
+  animation: pulse 1.5s infinite;
+}
+
+.qr-status-pill.scanned .dot {
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(2, 132, 199, 0.8);
+}
+
+.qr-status-pill.success .dot {
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+}
+
+.qr-status-pill.expired .dot {
+  background: var(--danger);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.qr-instructions {
+  margin: 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  background: var(--bg-primary);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+.step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.qr-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.btn-secondary {
+  padding: 10px 18px;
+  background: var(--bg-tertiary);
+  color: var(--text-main);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: var(--accent);
+}
+
+.btn-outline {
+  padding: 10px 14px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-outline:hover {
+  color: #fff;
+  border-color: var(--text-muted);
+}

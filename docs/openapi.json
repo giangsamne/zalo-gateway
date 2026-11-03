@@ -27,6 +27,34 @@
         }
       }
     },
+    "/api/v1/login/qr": {
+      "get": {
+        "summary": "Get latest Zalo Login QR Code",
+        "description": "Returns the current QR code status, raw code string, and base64 PNG data URL to display in any web/mobile interface.",
+        "responses": {
+          "200": {
+            "description": "QR Code status and image"
+          }
+        }
+      },
+      "post": {
+        "summary": "Generate or Refresh Login QR Code",
+        "description": "Initiates a new QR generation flow. Use query parameter force=true to wipe existing session and generate a fresh QR.",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "schema": { "type": "boolean", "default": false },
+            "description": "Force new session generation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Newly initiated QR Code status"
+          }
+        }
+      }
+    },
     "/api/v1/threads": {
       "get": {
         "summary": "List Conversation Threads",
