@@ -26,6 +26,9 @@ type ZaloBridge struct {
 	httpClient     *http.Client
 	startTime      time.Time
 	lastQRStatus   string
+	lastSentThread  string
+	lastSentContent string
+	lastSentTime    time.Time
 }
 
 func NewZaloBridge(daemonURL string, webhookMgr *WebhookManager) *ZaloBridge {
@@ -201,6 +204,18 @@ func (b *ZaloBridge) GetThreads() []*Thread {
 }
 
 func (b *ZaloBridge) SendMessage(threadID, message string, isGroup bool) (*SendMessageResponse, error) {
+	// Deduplicate rapid duplicate sends within 2 seconds
+	b.mu.Lock()
+	if b.lastSentThread == threadID && b.lastSentContent == message && time.Since(b.lastSentTime) < 2*time.Second {
+		b.mu.Unlock()
+		log.Printf("[Bridge] Phát hiện và chặn tin nhắn trùng lặp tới %s: %s", threadID, message)
+		return &SendMessageResponse{Success: true, MessageID: "duplicate_prevented"}, nil
+	}
+	b.lastSentThread = threadID
+	b.lastSentContent = message
+	b.lastSentTime = time.Now()
+	b.mu.Unlock()
+
 	payload := map[string]interface{}{
 		"threadId": threadID,
 		"message":  message,

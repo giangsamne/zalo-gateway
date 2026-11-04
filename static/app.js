@@ -118,6 +118,17 @@ function handleNewMessage(msg) {
   if (!messagesByThread[tid]) {
     messagesByThread[tid] = [];
   }
+
+  // Deduplicate: same ID
+  if (messagesByThread[tid].some(x => x.id === msg.id)) {
+    return;
+  }
+
+  // Deduplicate: same content sent within 4 seconds
+  if (msg.isSelf && messagesByThread[tid].some(x => x.isSelf && x.content === msg.content && Math.abs(x.timestamp - msg.timestamp) < 4000)) {
+    return;
+  }
+
   messagesByThread[tid].push(msg);
 
   // Update or insert thread
@@ -252,13 +263,18 @@ function scrollToBottom() {
   messageFeedEl.scrollTop = messageFeedEl.scrollHeight;
 }
 
-// Message submission
-messageFormEl.addEventListener("submit", async (e) => {
-  e.preventDefault();
+// Message submission with anti-duplicate guard
+const btnSendEl = document.getElementById("btn-send");
+let isSending = false;
+
+async function submitMessage() {
+  if (isSending) return;
   const text = messageInputEl.value.trim();
   if (!text || !currentThreadId) return;
 
+  isSending = true;
   messageInputEl.value = "";
+  if (btnSendEl) btnSendEl.disabled = true;
 
   try {
     const res = await fetch("/api/v1/send", {
@@ -276,14 +292,36 @@ messageFormEl.addEventListener("submit", async (e) => {
     }
   } catch (err) {
     alert("Không thể kết nối đến Gateway: " + err.message);
+  } finally {
+    isSending = false;
+    if (btnSendEl) btnSendEl.disabled = false;
+    messageInputEl.focus();
   }
-});
+}
 
-// Auto-expand and Enter to submit
+if (btnSendEl) {
+  btnSendEl.onclick = (e) => {
+    e.preventDefault();
+    submitMessage();
+  };
+}
+
+if (messageFormEl) {
+  messageFormEl.onsubmit = (e) => {
+    e.preventDefault();
+    submitMessage();
+    return false;
+  };
+}
+
+// Enter to submit (ignores Vietnamese IME composition)
 messageInputEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
+    if (e.isComposing || e.keyCode === 229) {
+      return; // Vietnamese IME đang gõ dấu (Telex/VNI)
+    }
     e.preventDefault();
-    messageFormEl.dispatchEvent(new Event("submit"));
+    submitMessage();
   }
 });
 
