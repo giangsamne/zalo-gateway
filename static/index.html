@@ -3,247 +3,227 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zalo Gateway - Multi-Session Web & Automation Hub</title>
+  <title>Zalo Web</title>
+  <link rel="icon" type="image/png" href="/static/zalo-assets/assets/logo-new.146dfa01c78183631d33b77999a18288.svg">
   <link rel="stylesheet" href="/static/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
 </head>
-<body>
-  <div class="app-layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <header class="sidebar-header">
-        <div class="brand">
-          <div class="brand-logo">⚡</div>
-          <div class="brand-info">
-            <h1>Zalo Gateway</h1>
-            <div class="status-badge" id="status-badge">
-              <span class="dot"></span>
-              <span class="status-text">Đang kết nối...</span>
-            </div>
-          </div>
+<body class="zalo-body">
+  <div class="zalo-layout">
+    
+    <!-- CỘT 1: THANH ĐIỀU HƯỚNG BÊN TRÁI (NAV RAIL) -->
+    <nav class="nav-rail">
+      <div class="nav-top">
+        <div class="user-avatar-wrap" id="user-avatar-wrap" title="Tài khoản Zalo của bạn">
+          <img src="/static/zalo-assets/assets/logo-new.146dfa01c78183631d33b77999a18288.svg" class="user-avatar" id="my-avatar" alt="Avatar">
+          <span class="online-indicator" id="online-dot"></span>
         </div>
-        <div class="header-actions">
-          <button class="btn-login-header" id="btn-open-login" title="Đăng nhập Zalo">🔑 Đăng nhập</button>
-          <button class="icon-btn" id="btn-webhooks" title="Cấu hình Webhooks">🪝</button>
-          <button class="icon-btn" id="btn-docs" title="Tài liệu API & Agent">📖</button>
-        </div>
-      </header>
 
-      <div class="search-box">
-        <input type="text" id="search-threads" placeholder="Tìm kiếm hội thoại...">
+        <button class="nav-tab active" data-tab="messages" title="Tin nhắn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span class="nav-badge" id="nav-unread-badge" style="display:none;">0</span>
+        </button>
+
+        <button class="nav-tab" data-tab="contacts" title="Danh bạ">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </button>
+
+        <button class="nav-tab" data-tab="todo" title="Giao việc / To-Do">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </button>
+
+        <button class="nav-tab" data-tab="cloud" title="Cloud của tôi">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        </button>
       </div>
 
-      <div id="login-banner" class="login-banner" style="display:none;">
-        <div class="login-banner-text">
-          <span>⚠️ Zalo chưa đăng nhập</span>
-          <small>Quét mã QR để kích hoạt nhắn tin</small>
+      <div class="nav-bottom">
+        <button class="nav-tab" id="btn-open-webhooks" title="Webhooks & Tự động hoá">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        </button>
+        <button class="nav-tab" id="btn-login-modal" title="Trạng thái đăng nhập Zalo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </button>
+        <button class="nav-tab" id="btn-open-docs" title="Tài liệu API & Agent">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- CỘT 2: DANH SÁCH CUỘC TRÒ CHUYỆN (CONVERSATION SIDEBAR) -->
+    <aside class="conv-sidebar">
+      <!-- Search header -->
+      <div class="conv-header">
+        <div class="search-input-wrap">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#72808e" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="contact-search-input" placeholder="Tìm kiếm" autocomplete="off">
         </div>
-        <button id="btn-banner-login" class="btn-primary btn-sm">Quét QR</button>
+        <div class="conv-quick-actions">
+          <button class="quick-btn" title="Thêm bạn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          </button>
+          <button class="quick-btn" title="Tạo nhóm chat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </button>
+        </div>
       </div>
 
-      <div class="thread-list" id="thread-list">
-        <div class="empty-state">Đang tải danh sách hội thoại...</div>
+      <!-- Filter tabs -->
+      <div class="conv-tabs">
+        <button class="tab-item active" data-filter="all">Tất cả</button>
+        <button class="tab-item" data-filter="unread">Chưa đọc</button>
+        <button class="tab-item" data-filter="classified">Phân loại <span class="tab-arrow">▼</span></button>
       </div>
 
-      <footer class="sidebar-footer">
-        <div class="gateway-stats">
-          <span>Port: <strong id="stat-port">54321</strong></span>
-          <span>Webhooks: <strong id="stat-webhooks">0</strong></span>
-          <span>Sockets: <strong id="stat-sockets">0</strong></span>
+      <!-- Thread list -->
+      <div class="conv-list" id="conv-list">
+        <div class="conv-loading">
+          <div class="spinner"></div>
+          <span>Đang đồng bộ hội thoại từ Zalo...</span>
         </div>
-      </footer>
+      </div>
     </aside>
 
-    <!-- Chat Area -->
-    <main class="chat-area">
+    <!-- CỘT 3: KHUNG CHAT CHÍNH (CHAT VIEWPORT) -->
+    <main class="chat-viewport">
+      <!-- Chat Header -->
       <header class="chat-header" id="chat-header">
-        <div class="chat-title-info">
-          <div class="avatar" id="active-avatar">💬</div>
-          <div>
-            <h2 id="active-thread-name">Chọn một hội thoại để bắt đầu</h2>
-            <div class="thread-sub" id="active-thread-sub">Hỗ trợ đa phiên đăng nhập không lo bị đăng xuất</div>
+        <div class="chat-header-left">
+          <div class="avatar-wrap">
+            <img src="/static/zalo-assets/assets/logo-new.146dfa01c78183631d33b77999a18288.svg" id="active-chat-avatar" class="chat-avatar" alt="Avatar">
+            <span class="active-online-dot"></span>
+          </div>
+          <div class="chat-header-info">
+            <div class="chat-title-row">
+              <h2 id="active-chat-name">Chọn một cuộc trò chuyện</h2>
+              <span class="chat-badge" id="chat-type-badge">Cá nhân</span>
+            </div>
+            <div class="chat-status-text" id="active-chat-status">Zalo PC Desktop Engine đang trực tuyến</div>
           </div>
         </div>
-        <div class="chat-actions" id="chat-actions" style="display:none;">
-          <span class="badge" id="badge-thread-id">ID: -</span>
-          <span class="badge badge-accent" id="badge-thread-type">Cá nhân</span>
+
+        <div class="chat-header-right" id="chat-header-actions">
+          <button class="head-tool-btn" title="Thêm bạn vào nhóm">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          </button>
+          <button class="head-tool-btn" title="Tìm kiếm tin nhắn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+          <button class="head-tool-btn" title="Cuộc gọi thoại">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </button>
+          <button class="head-tool-btn" title="Cuộc gọi video">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </button>
+          <button class="head-tool-btn" id="btn-toggle-info" title="Thông tin hội thoại">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+          </button>
         </div>
       </header>
 
-      <div class="message-feed" id="message-feed">
-        <div class="welcome-banner">
-          <div class="welcome-icon">🚀</div>
-          <h3>Chào mừng đến với Zalo Gateway</h3>
-          <p>Hệ thống cổng trung gian duy trì kết nối Zalo cá nhân 24/7. Bạn có thể mở link này trên nhiều máy tính cùng lúc hoặc dùng API/Webhook cho các công cụ tự động hóa (n8n, Make, AI Agent).</p>
+      <!-- Message History List -->
+      <div class="chat-messages" id="chat-messages">
+        <div class="welcome-card" id="welcome-card">
+          <img src="/static/zalo-assets/assets/logo-new.146dfa01c78183631d33b77999a18288.svg" class="welcome-logo" alt="Zalo Logo">
+          <h2>Chào mừng bạn đến với Zalo Web & Gateway</h2>
+          <p>Khám phá những tiện ích hỗ trợ làm việc và trò chuyện cùng người thân, bạn bè được tối ưu hoá cho máy tính của bạn.</p>
+          <div class="feature-pills">
+            <div class="pill">⚡ Hoạt động song song với máy tính chính</div>
+            <div class="pill">🔒 Không bị đá phiên đăng nhập</div>
+            <div class="pill">🤖 Sẵn sàng kết nối API & AI Agent</div>
+          </div>
         </div>
       </div>
 
-      <footer class="chat-input-area" id="chat-input-area" style="display:none;">
-        <form id="message-form" onsubmit="return false;">
-          <textarea id="message-input" placeholder="Nhập tin nhắn... (Nhấn Enter để gửi, Shift+Enter xuống dòng)" rows="1"></textarea>
-          <button type="button" id="btn-send" class="btn-primary">
-            <span>Gửi</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      <!-- Chat Input Area -->
+      <footer class="chat-footer" id="chat-footer" style="display:none;">
+        <!-- Toolbar icons -->
+        <div class="chat-toolbar">
+          <div class="tool-left">
+            <button class="tool-icon-btn" title="Gửi Sticker">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            </button>
+            <button class="tool-icon-btn" title="Gửi hình ảnh">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </button>
+            <button class="tool-icon-btn" title="Đính kèm tệp tin">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <button class="tool-icon-btn" title="Chụp ảnh màn hình">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+            </button>
+            <button class="tool-icon-btn" title="Gửi danh thiếp">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0"/><path d="M2 9.5h20"/></svg>
+            </button>
+          </div>
+          <div class="tool-right">
+            <button class="tool-icon-btn" title="Thích nhanh">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0068ff" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Input Box -->
+        <div class="chat-input-row">
+          <textarea id="richInput" placeholder="Nhập tin nhắn..." rows="1"></textarea>
+          <button type="button" id="btn-send-msg" class="send-action-btn" title="Gửi (Enter)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
-        </form>
+        </div>
       </footer>
     </main>
-  </div>
 
-  <!-- Webhooks Modal -->
-  <div class="modal-overlay" id="modal-webhooks">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>🪝 Quản lý Webhooks (Tự động hóa)</h3>
-        <button class="close-btn" data-close="modal-webhooks">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p class="modal-desc">Đăng ký URL để tự động nhận tin nhắn Zalo gửi sang <strong>n8n</strong>, <strong>Make</strong>, <strong>Telegram Bot</strong> hoặc ứng dụng riêng của bạn.</p>
-
-        <form id="webhook-form" class="webhook-form">
-          <div class="form-group">
-            <label>Webhook URL (Endpoint nhận POST JSON)</label>
-            <input type="url" id="wh-url" placeholder="https://your-n8n.com/webhook/zalo" required>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Secret Key (Tùy chọn - để ký HMAC-SHA256)</label>
-              <input type="text" id="wh-secret" placeholder="my-super-secret-key">
-            </div>
-            <div class="form-group">
-              <label>Sự kiện (Events)</label>
-              <select id="wh-events">
-                <option value="*">Tất cả sự kiện (*)</option>
-                <option value="message.received">Chỉ tin nhắn đến (message.received)</option>
-                <option value="message.sent">Chỉ tin nhắn đi (message.sent)</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" class="btn-primary">➕ Thêm Webhook</button>
-        </form>
-
-        <h4 style="margin-top: 24px; margin-bottom: 12px;">Danh sách Webhook đang kích hoạt</h4>
-        <div class="webhook-list" id="webhook-list">
-          <!-- Rendered dynamically -->
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Docs Modal -->
-  <div class="modal-overlay" id="modal-docs">
-    <div class="modal-card modal-large">
-      <div class="modal-header">
-        <h3>📖 Tài liệu Kỹ thuật & API cho Tự động hóa / AI Agent</h3>
-        <button class="close-btn" data-close="modal-docs">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="docs-tabs">
-          <button class="tab-btn active" data-tab="tab-curl">cURL / HTTP</button>
-          <button class="tab-tab" data-tab="tab-n8n">n8n / Make</button>
-          <button class="tab-tab" data-tab="tab-agent">AI Agent / Antigravity</button>
-          <button class="tab-tab" data-tab="tab-openapi">OpenAPI Spec</button>
-        </div>
-
-        <div class="tab-content" id="tab-curl">
-          <h4>1. Gửi tin nhắn qua REST API</h4>
-          <pre><code>curl -X POST http://localhost:54321/api/v1/send \
-  -H "Content-Type: application/json" \
-  -d '{
-    "thread_id": "1842365959181420185",
-    "message": "Xin chào! Đây là tin nhắn tự động từ Zalo Gateway.",
-    "is_group": false
-  }'</code></pre>
-
-          <h4>2. Lấy danh sách tin nhắn</h4>
-          <pre><code>curl http://localhost:54321/api/v1/messages?limit=20</code></pre>
-
-          <h4>3. Kiểm tra trạng thái Gateway</h4>
-          <pre><code>curl http://localhost:54321/api/v1/status</code></pre>
-        </div>
-
-        <div class="tab-content" id="tab-n8n" style="display:none;">
-          <h4>Tích hợp n8n Workflow</h4>
-          <ol>
-            <li>Tạo một node <strong>Webhook</strong> (HTTP Method: POST) trong n8n.</li>
-            <li>Copy Test/Production Webhook URL từ n8n.</li>
-            <li>Vào tab <strong>Quản lý Webhooks</strong> trên Zalo Gateway và dán URL vào.</li>
-            <li>Mỗi khi có tin nhắn Zalo gửi đến, n8n sẽ nhận ngay payload JSON chứa:
-              <pre><code>{
-  "event": "message.received",
-  "timestamp": 1793718000000,
-  "data": {
-    "id": "8448...",
-    "threadId": "1842365959181420185",
-    "senderName": "Nguyễn Văn A",
-    "content": "Chào bạn, cho mình hỏi giá sản phẩm...",
-    "isGroup": false
-  }
-}</code></pre>
-            </li>
-          </ol>
-        </div>
-
-        <div class="tab-content" id="tab-agent" style="display:none;">
-          <h4>Dành cho AI Agent / LLMs</h4>
-          <p>Tài liệu chuẩn hóa cho Agent được tự động phục vụ tại:</p>
-          <ul>
-            <li><a href="/agent-guide.md" target="_blank"><code>/agent-guide.md</code></a> - Hướng dẫn chi tiết bằng Markdown cho Agent.</li>
-            <li><a href="/llms.txt" target="_blank"><code>/llms.txt</code></a> - File ngữ cảnh chuẩn AI LLMs.</li>
-            <li><a href="/api/v1/openapi.json" target="_blank"><code>/api/v1/openapi.json</code></a> - Đặc tả OpenAPI 3.0 đầy đủ.</li>
-          </ul>
-        </div>
-
-        <div class="tab-content" id="tab-openapi" style="display:none;">
-          <h4>OpenAPI 3.0 Raw Specification</h4>
-          <p>Bạn có thể import đường dẫn <a href="/api/v1/openapi.json" target="_blank"><code>http://localhost:54321/api/v1/openapi.json</code></a> vào Swagger Editor, Postman hoặc Custom GPT Actions.</p>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- QR Login Modal -->
-  <div class="modal-overlay" id="modal-login">
-    <div class="modal-card modal-qr">
+  <div class="modal-overlay" id="modal-qr">
+    <div class="modal-box">
       <div class="modal-header">
-        <h3>📲 Đăng nhập Zalo bằng mã QR</h3>
-        <button class="close-btn" data-close="modal-login">&times;</button>
+        <div class="modal-title">
+          <img src="/static/zalo-assets/assets/logo-new.146dfa01c78183631d33b77999a18288.svg" style="height:24px;">
+          <span>Đăng nhập Zalo PC</span>
+        </div>
+        <button class="modal-close" data-close="modal-qr">&times;</button>
       </div>
-      <div class="modal-body text-center">
-        <p class="modal-desc">Mở ứng dụng Zalo trên điện thoại, bấm biểu tượng quét mã QR để đăng nhập vào Gateway.</p>
-
+      <div class="modal-body qr-modal-body">
         <div class="qr-container">
-          <div class="qr-box" id="qr-box">
-            <div class="qr-loading" id="qr-loading">
-              <div class="spinner"></div>
-              <span id="qr-loading-text">Đang tải mã QR mới nhất...</span>
-            </div>
-            <img id="qr-img" class="qr-image" style="display:none;" alt="Mã QR Zalo">
-          </div>
-          <div class="qr-status-pill waiting" id="qr-status-pill">
-            <span class="dot"></span>
-            <span id="qr-status-text">Đang chờ quét mã...</span>
+          <img id="qr-image" src="" alt="Mã QR Zalo">
+          <div id="qr-loading" class="qr-overlay-loading">
+            <div class="spinner"></div>
+            <span>Đang lấy mã QR từ Zalo PC...</span>
           </div>
         </div>
-
         <div class="qr-instructions">
-          <div class="step-item">
-            <span class="step-num">1</span>
-            <span>Mở app <strong>Zalo</strong> trên điện thoại</span>
-          </div>
-          <div class="step-item">
-            <span class="step-num">2</span>
-            <span>Chọn biểu tượng <strong>Quét QR</strong> góc trên</span>
-          </div>
-          <div class="step-item">
-            <span class="step-num">3</span>
-            <span>Hướng camera & chọn <strong>Đăng nhập</strong></span>
-          </div>
+          <p><strong>1.</strong> Mở ứng dụng Zalo trên điện thoại</p>
+          <p><strong>2.</strong> Chọn biểu tượng quét QR ở góc trên thanh tìm kiếm</p>
+          <p><strong>3.</strong> Quét mã và xác nhận <strong>"Đăng nhập trên máy tính"</strong></p>
         </div>
+        <div class="qr-status-box" id="qr-status-box">
+          <span class="dot-status"></span>
+          <span id="qr-status-text">Đang kết nối Zalo Desktop Engine...</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        <div class="qr-actions">
-          <button id="btn-refresh-qr" class="btn-primary">🔄 Làm mới mã QR</button>
-          <button id="btn-force-qr" class="btn-outline" title="Xóa session cũ và tạo mã mới">⚡ Đăng nhập tài khoản khác</button>
+  <!-- Webhook & Config Modal -->
+  <div class="modal-overlay" id="modal-webhooks">
+    <div class="modal-box modal-lg">
+      <div class="modal-header">
+        <h3>🪝 Quản lý Webhooks & API Tự động hoá</h3>
+        <button class="modal-close" data-close="modal-webhooks">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="webhook-desc">Mọi dự án trên Homelab (Home Assistant, Bot, AI Agent, n8n) có thể đăng ký nhận tin nhắn mới theo thời gian thực.</p>
+        
+        <form id="webhook-form" class="webhook-form" onsubmit="return false;">
+          <input type="url" id="wh-url" placeholder="https://homelab.local/api/zalo-webhook" required>
+          <input type="text" id="wh-secret" placeholder="Secret Key (tuỳ chọn)">
+          <button type="button" id="btn-save-webhook" class="btn-primary">Đăng ký Webhook</button>
+        </form>
+
+        <h4 style="margin-top:20px; margin-bottom:10px;">Danh sách Webhook đang hoạt động</h4>
+        <div id="webhook-list" class="webhook-list">
+          <div class="empty-wh">Chưa có webhook nào được đăng ký.</div>
         </div>
       </div>
     </div>
