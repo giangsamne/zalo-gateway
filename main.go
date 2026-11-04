@@ -209,12 +209,22 @@ func main() {
 		defer r.Body.Close()
 
 		var req SendMessageRequest
-		if err := json.Unmarshal(body, &req); err != nil || req.ThreadID == "" || req.Message == "" {
-			http.Error(w, "Missing thread_id or message", http.StatusBadRequest)
+		if err := json.Unmarshal(body, &req); err != nil {
+			http.Error(w, "Invalid JSON body", http.StatusBadRequest)
 			return
 		}
 
-		res, _ := bridge.SendMessage(req.ThreadID, req.Message, req.IsGroup)
+		targetID := req.ThreadID
+		if targetID == "" {
+			targetID = req.RecipientID
+		}
+
+		if targetID == "" || req.Message == "" {
+			http.Error(w, "Missing thread_id/recipient_id or message", http.StatusBadRequest)
+			return
+		}
+
+		res, _ := bridge.SendMessage(targetID, req.Message, req.IsGroup)
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(res)
 	})

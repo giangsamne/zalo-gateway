@@ -30,9 +30,10 @@ type Thread struct {
 
 // SendMessageRequest is the payload to send a message via REST or WebSocket.
 type SendMessageRequest struct {
-	ThreadID string `json:"thread_id"`
-	Message  string `json:"message"`
-	IsGroup  bool   `json:"is_group"`
+	ThreadID    string `json:"thread_id"`
+	RecipientID string `json:"recipient_id,omitempty"`
+	Message     string `json:"message"`
+	IsGroup     bool   `json:"is_group"`
 }
 
 // SendMessageResponse is the result of sending a message.
