@@ -463,6 +463,8 @@ function stopQRPoll() {
 
 async function loadQRCode(force = false) {
   qrLoadingEl.style.display = "flex";
+  const spinner = qrLoadingEl.querySelector(".spinner");
+  if (spinner) spinner.style.display = "block";
   qrImgEl.style.display = "none";
   qrLoadingTextEl.textContent = force ? "Đang tạo phiên mới..." : "Đang tải mã QR mới nhất...";
   qrStatusPillEl.className = "qr-status-pill waiting";
@@ -488,6 +490,16 @@ function renderQRState(qr) {
   }
 
   switch (qr.status) {
+    case "connected":
+      qrLoadingEl.style.display = "flex";
+      const sp = qrLoadingEl.querySelector(".spinner");
+      if (sp) sp.style.display = "none";
+      qrImgEl.style.display = "none";
+      qrLoadingTextEl.innerHTML = `🟢 <strong>Tài khoản hiện đang kết nối Zalo sẵn!</strong><br><small style="color:var(--text-muted); margin-top:8px; display:block;">UID: ${qr.ownId || ""}. Bạn có thể bắt đầu nhắn tin ngay. Nếu bạn muốn đổi số Zalo khác, bấm "Đăng nhập tài khoản khác" bên dưới.</small>`;
+      qrStatusPillEl.className = "qr-status-pill success";
+      qrStatusTextEl.textContent = "🟢 Zalo Đã kết nối";
+      break;
+
     case "qr_ready":
       qrStatusPillEl.className = "qr-status-pill waiting";
       qrStatusTextEl.textContent = "📲 Vui lòng quét mã QR bằng app Zalo";
@@ -521,6 +533,8 @@ function renderQRState(qr) {
 
     case "generating":
       qrLoadingEl.style.display = "flex";
+      const spin = qrLoadingEl.querySelector(".spinner");
+      if (spin) spin.style.display = "block";
       qrImgEl.style.display = "none";
       qrLoadingTextEl.textContent = "Đang tạo mã QR mới từ Zalo...";
       qrStatusPillEl.className = "qr-status-pill waiting";
