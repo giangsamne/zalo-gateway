@@ -2,45 +2,68 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
 
 type ZaloBridge struct {
-	mu             sync.RWMutex
-	daemonURL      string
-	connected      bool
-	ownID          string
-	masterUID      string
-	messages       []Message
-	seenMessageIDs map[string]bool
-	threads        map[string]*Thread
-	hub            *Hub
-	webhookMgr     *WebhookManager
-	httpClient     *http.Client
-	startTime      time.Time
-	lastQRStatus   string
+	mu              sync.RWMutex
+	daemonURL       string
+	displayEndpoint string
+	connected       bool
+	ownID           string
+	masterUID       string
+	messages        []Message
+	seenMessageIDs  map[string]bool
+	threads         map[string]*Thread
+	hub             *Hub
+	webhookMgr      *WebhookManager
+	httpClient      *http.Client
+	startTime       time.Time
+	lastQRStatus    string
 	lastSentThread  string
 	lastSentContent string
 	lastSentTime    time.Time
 }
 
 func NewZaloBridge(daemonURL string, webhookMgr *WebhookManager) *ZaloBridge {
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	effectiveURL := daemonURL
+	display := daemonURL
+
+	// Support Unix Domain Socket (e.g. unix:///tmp/zalo-bridge.sock or /tmp/zalo-bridge.sock)
+	if strings.HasPrefix(daemonURL, "unix://") || strings.HasPrefix(daemonURL, "/") {
+		socketPath := strings.TrimPrefix(daemonURL, "unix://")
+		client.Transport = &http.Transport{
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				var d net.Dialer
+				return d.DialContext(ctx, "unix", socketPath)
+			},
+		}
+		effectiveURL = "http://unix"
+		display = "unix://" + socketPath
+	}
+
 	return &ZaloBridge{
-		daemonURL:      daemonURL,
-		seenMessageIDs: make(map[string]bool),
-		threads:        make(map[string]*Thread),
-		webhookMgr:     webhookMgr,
-		httpClient: &http.Client{
-			Timeout: 5 * time.Second,
-		},
-		startTime: time.Now(),
+		daemonURL:       effectiveURL,
+		displayEndpoint: display,
+		seenMessageIDs:  make(map[string]bool),
+		threads:         make(map[string]*Thread),
+		webhookMgr:      webhookMgr,
+		httpClient:      client,
+		startTime:       time.Now(),
 	}
 }
 
@@ -341,7 +364,7 @@ func (b *ZaloBridge) GetStatus() GatewayStatus {
 		TotalMessages:  len(b.messages),
 		ActiveWebhooks: b.webhookMgr.Count(),
 		ActiveSockets:  activeSockets,
-		DaemonEndpoint: b.daemonURL,
+		DaemonEndpoint: b.displayEndpoint,
 		Version:        "1.0.0",
 	}
 }

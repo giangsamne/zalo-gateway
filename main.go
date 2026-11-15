@@ -30,7 +30,7 @@ func main() {
 		}
 	}
 
-	defaultDaemon := "http://127.0.0.1:62322"
+	defaultDaemon := "unix:///tmp/zalo-bridge.sock"
 	if envDaemon := os.Getenv("DAEMON_URL"); envDaemon != "" {
 		defaultDaemon = envDaemon
 	}

@@ -74,7 +74,7 @@ Mặc định, Zalo chỉ cho phép **1 phiên đăng nhập trên trình duyệ
 
 ### 1. Yêu cầu
 - Đã cài đặt Go 1.22+ (đối với build từ nguồn).
-- Daemon nền Zalo đang chạy (ví dụ `zalo-desktop` trên port `62322`).
+- Daemon nền Zalo đang chạy (ví dụ `zalo-desktop` qua Unix socket `/tmp/zalo-bridge.sock` hoặc HTTP daemon).
 
 ### 2. Cài đặt nhanh qua 1 dòng lệnh
 ```bash
@@ -86,11 +86,12 @@ go build -o zalo-gateway .
 
 ### 3. Tùy chọn tham số
 ```bash
-./zalo-gateway -port 24321 -daemon http://127.0.0.1:62322 -config webhooks.json
+# Mặc định sử dụng Unix Domain Socket (tiết kiệm cổng, chỉ mở 1 cổng 24321 duy nhất trên máy)
+./zalo-gateway -port 24321 -daemon unix:///tmp/zalo-bridge.sock -config webhooks.json
 ```
 Hoặc dùng biến môi trường:
 ```bash
-PORT=24321 DAEMON_URL=http://127.0.0.1:62322 ./zalo-gateway
+PORT=24321 DAEMON_URL=unix:///tmp/zalo-bridge.sock ./zalo-gateway
 ```
 
 Sau khi chạy, mở trình duyệt:
