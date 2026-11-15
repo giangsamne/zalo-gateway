@@ -30,7 +30,7 @@ func main() {
 		}
 	}
 
-	defaultDaemon := "http://127.0.0.1:24322"
+	defaultDaemon := "http://127.0.0.1:62322"
 	if envDaemon := os.Getenv("DAEMON_URL"); envDaemon != "" {
 		defaultDaemon = envDaemon
 	}
