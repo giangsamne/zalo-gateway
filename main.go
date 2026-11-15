@@ -23,19 +23,19 @@ var docsFS embed.FS
 
 func main() {
 	// Parse CLI options with environment fallbacks
-	defaultPort := 54321
+	defaultPort := 24321
 	if envPort := os.Getenv("PORT"); envPort != "" {
 		if p, err := strconv.Atoi(envPort); err == nil {
 			defaultPort = p
 		}
 	}
 
-	defaultDaemon := "http://127.0.0.1:39123"
+	defaultDaemon := "http://127.0.0.1:24322"
 	if envDaemon := os.Getenv("DAEMON_URL"); envDaemon != "" {
 		defaultDaemon = envDaemon
 	}
 
-	port := flag.Int("port", defaultPort, "Port to listen on (5-digit port default: 54321)")
+	port := flag.Int("port", defaultPort, "Port to listen on (5-digit non-system port default: 24321)")
 	daemonURL := flag.String("daemon", defaultDaemon, "Zalo underlying daemon endpoint")
 	configPath := flag.String("config", "webhooks.json", "Path to webhooks persistent config")
 	flag.Parse()

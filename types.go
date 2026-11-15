@@ -26,6 +26,7 @@ type Thread struct {
 	LastTimestamp int64  `json:"lastTimestamp"`
 	LastISOTime   string `json:"lastIsoTime"`
 	UnreadCount   int    `json:"unreadCount"`
+	Avatar        string `json:"avatar,omitempty"`
 }
 
 // SendMessageRequest is the payload to send a message via REST or WebSocket.

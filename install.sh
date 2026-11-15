@@ -43,7 +43,7 @@ After=network.target
 Type=simple
 User=$CURRENT_USER
 WorkingDirectory=$HOME
-ExecStart=$INSTALL_DIR/$APP -port 54321
+ExecStart=$INSTALL_DIR/$APP -port 24321
 Restart=always
 RestartSec=3
 Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -54,12 +54,12 @@ WantedBy=multi-user.target
 EOF"
     sudo systemctl daemon-reload
     sudo systemctl enable --now "${APP}.service"
-    echo "🚀 Zalo Gateway service started on port 54321!"
+    echo "🚀 Zalo Gateway service started on port 24321!"
   fi
 fi
 
 echo "=========================================================="
 echo " 🎉 Installation Complete!                                "
-echo " 🌐 Web Dashboard: http://localhost:54321                 "
-echo " 📖 Agent Guide:   http://localhost:54321/agent-guide.md  "
+echo " 🌐 Web Dashboard: http://localhost:24321                 "
+echo " 📖 Agent Guide:   http://localhost:24321/agent-guide.md  "
 echo "=========================================================="

@@ -13,7 +13,7 @@ This document provides concrete, copy-pasteable examples for integrating Zalo Ga
 2. Copy the Webhook URL from n8n (e.g. `http://localhost:5678/webhook/zalo-inbound`).
 3. Register the webhook in Zalo Gateway:
 ```bash
-curl -X POST http://localhost:54321/api/v1/webhooks \
+curl -X POST http://localhost:24321/api/v1/webhooks \
   -H "Content-Type: application/json" \
   -d '{
     "url": "http://localhost:5678/webhook/zalo-inbound",
@@ -23,7 +23,7 @@ curl -X POST http://localhost:54321/api/v1/webhooks \
 ```
 4. In n8n, add an **HTTP Request** node to reply back when desired:
    - Method: `POST`
-   - URL: `http://localhost:54321/api/v1/send`
+   - URL: `http://localhost:24321/api/v1/send`
    - Body Parameters:
      - `thread_id`: `{{ $json.body.data.threadId }}`
      - `message`: `Cảm ơn bạn! Đơn hàng của bạn đang được xử lý.`
@@ -37,7 +37,7 @@ curl -X POST http://localhost:54321/api/v1/webhooks \
 import requests
 import json
 
-GATEWAY_URL = "http://localhost:54321"
+GATEWAY_URL = "http://localhost:24321"
 
 def check_status():
     resp = requests.get(f"{GATEWAY_URL}/api/v1/status")
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 ## 3. Node.js / TypeScript Integration
 
 ```typescript
-const GATEWAY_URL = "http://localhost:54321";
+const GATEWAY_URL = "http://localhost:24321";
 
 async function sendZalo(threadId: string, message: string, isGroup = false) {
   const res = await fetch(`${GATEWAY_URL}/api/v1/send`, {
@@ -91,7 +91,7 @@ Send an automated alert (e.g. from a cronjob or backup script):
 THREAD_ID="1842365959181420185"
 MESSAGE="⚠️ [Alert] Backup hoàn tất lúc $(date)!"
 
-curl -s -X POST http://localhost:54321/api/v1/send \
+curl -s -X POST http://localhost:24321/api/v1/send \
   -H "Content-Type: application/json" \
   -d "{\"thread_id\": \"$THREAD_ID\", \"message\": \"$MESSAGE\", \"is_group\": false}"
 ```

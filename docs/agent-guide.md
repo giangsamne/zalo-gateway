@@ -9,7 +9,7 @@ Standard Zalo Web (`chat.zalo.me`) permits only **one active web browser session
 
 **Zalo Gateway** solves this by:
 - Acting as a single persistent daemon session.
-- Exposing a local Go-native HTTP & WebSocket server on a 5-digit port (`54321`).
+- Exposing a local Go-native HTTP & WebSocket server on a 5-digit non-system port (`24321`).
 - Allowing both humans (via the embedded Web UI) and AI agents (via REST / Webhook / WebSocket) to interact concurrently.
 
 ---
@@ -24,7 +24,7 @@ GET /api/v1/status
 ```json
 {
   "status": "running",
-  "port": 54321,
+  "port": 24321,
   "connected": true,
   "own_id": "1842365959181420185",
   "uptime_seconds": 3600,

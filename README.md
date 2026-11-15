@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Go Version](https://img.shields.io/badge/Go-1.22%2B-00ADD8?style=flat&logo=go)
-![Port](https://img.shields.io/badge/Port-54321-orange?style=flat)
+![Port](https://img.shields.io/badge/Port-24321-orange?style=flat)
 ![Protocol](https://img.shields.io/badge/Protocol-HTTP%20%7C%20WebSocket%20%7C%20Webhook-blue?style=flat)
 ![AI Ready](https://img.shields.io/badge/AI%20Agent-Antigravity%20%7C%20Claude%20%7C%20n8n-green?style=flat)
 ![License](https://img.shields.io/badge/License-MIT-purple?style=flat)
@@ -25,7 +25,7 @@ Mặc định, Zalo chỉ cho phép **1 phiên đăng nhập trên trình duyệ
 - Bạn muốn tích hợp AI Agent, chatbot hoặc workflow tự động hóa (n8n, Make, CRM) mà không làm gián đoạn việc nhắn tin của bản thân.
 
 ### Giải pháp: Zalo Gateway
-**Zalo Gateway** là một máy chủ trung gian hiệu năng cao viết bằng **Go native**, chạy độc lập trên cổng 5 chữ số **`54321`**:
+**Zalo Gateway** là một máy chủ trung gian hiệu năng cao viết bằng **Go native**, chạy độc lập trên cổng 5 chữ số **`24321`**:
 1. **Duy trì 1 phiên Zalo duy nhất ngầm định**: Kết nối với daemon Zalo để duy trì session.
 2. **Giao diện Web Client riêng biệt**: Tích hợp sẵn Web UI hiện đại (Single Page App) nhúng thẳng trong file thực thi Go. Bạn có thể mở link này trên **bao nhiêu máy tính, điện thoại cũng được mà KHÔNG BAO GIỜ bị Zalo đá phiên**.
 3. **Cổng tự động hóa toàn diện (Automation Hub)**: Cung cấp đầy đủ **REST API**, **WebSocket hai chiều**, và **Webhooks** (có xác thực HMAC-SHA256) cho n8n, Make, Python, AI Agent.
@@ -40,7 +40,7 @@ Mặc định, Zalo chỉ cho phép **1 phiên đăng nhập trên trình duyệ
                     └──────────────────────▲───────────────────────┘
                                            │ Duy trì 1 phiên duy nhất (session)
                     ┌──────────────────────▼───────────────────────┐
-                    │      Zalo Gateway (Go Native - Port 54321)   │
+                    │      Zalo Gateway (Go Native - Port 24321)   │
                     │   - Embedded Web UI (SPA)                    │
                     │   - WebSocket Hub (Bi-directional)           │
                     │   - REST API (/api/v1)                       │
@@ -74,7 +74,7 @@ Mặc định, Zalo chỉ cho phép **1 phiên đăng nhập trên trình duyệ
 
 ### 1. Yêu cầu
 - Đã cài đặt Go 1.22+ (đối với build từ nguồn).
-- Daemon nền Zalo đang chạy (ví dụ `zalo-personal-ai-agent` trên port `39123`).
+- Daemon nền Zalo đang chạy (ví dụ `zalo-personal-ai-agent` trên port `24322`).
 
 ### 2. Cài đặt nhanh qua 1 dòng lệnh
 ```bash
@@ -86,18 +86,18 @@ go build -o zalo-gateway .
 
 ### 3. Tùy chọn tham số
 ```bash
-./zalo-gateway -port 54321 -daemon http://127.0.0.1:39123 -config webhooks.json
+./zalo-gateway -port 24321 -daemon http://127.0.0.1:24322 -config webhooks.json
 ```
 Hoặc dùng biến môi trường:
 ```bash
-PORT=54321 DAEMON_URL=http://127.0.0.1:39123 ./zalo-gateway
+PORT=24321 DAEMON_URL=http://127.0.0.1:24322 ./zalo-gateway
 ```
 
 Sau khi chạy, mở trình duyệt:
-* 🌐 **Web Chat Client**: `http://localhost:54321/`
-* 📊 **API Status**: `http://localhost:54321/api/v1/status`
-* 📖 **Agent Guide**: `http://localhost:54321/agent-guide.md`
-* 📋 **OpenAPI Specification**: `http://localhost:54321/api/v1/openapi.json`
+* 🌐 **Web Chat Client**: `http://localhost:24321/`
+* 📊 **API Status**: `http://localhost:24321/api/v1/status`
+* 📖 **Agent Guide**: `http://localhost:24321/agent-guide.md`
+* 📋 **OpenAPI Specification**: `http://localhost:24321/api/v1/openapi.json`
 
 ---
 
@@ -110,7 +110,7 @@ GET /api/v1/status
 ```json
 {
   "status": "running",
-  "port": 54321,
+  "port": 24321,
   "connected": true,
   "own_id": "1842365959181420185",
   "uptime_seconds": 3600,
@@ -174,7 +174,7 @@ Content-Type: application/json
   }
 }
 ```
-4. Dùng node **AI Agent** trong n8n xử lý câu trả lời rồi gọi lại `POST http://localhost:54321/api/v1/send` để trả lời khách hàng ngay lập tức!
+4. Dùng node **AI Agent** trong n8n xử lý câu trả lời rồi gọi lại `POST http://localhost:24321/api/v1/send` để trả lời khách hàng ngay lập tức!
 
 ---
 
@@ -190,7 +190,7 @@ After=network.target
 Type=simple
 User=giang3dlab
 WorkingDirectory=/home/giang3dlab/apps/zalo-gateway
-ExecStart=/home/giang3dlab/apps/zalo-gateway/zalo-gateway -port 54321
+ExecStart=/home/giang3dlab/apps/zalo-gateway/zalo-gateway -port 24321
 Restart=always
 RestartSec=3
 

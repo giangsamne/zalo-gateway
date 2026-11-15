@@ -58,12 +58,44 @@ func (b *ZaloBridge) pollLoop() {
 
 	// Initial fetch
 	b.syncStatus()
+	b.syncThreads()
 	b.syncMessages()
 
 	for range ticker.C {
 		b.syncStatus()
+		b.syncThreads()
 		b.syncMessages()
 	}
+}
+
+func (b *ZaloBridge) syncThreads() {
+	if !b.connected {
+		return
+	}
+	resp, err := b.httpClient.Get(fmt.Sprintf("%s/threads", b.daemonURL))
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	var fetched []*Thread
+	if err := json.NewDecoder(resp.Body).Decode(&fetched); err != nil {
+		return
+	}
+
+	b.mu.Lock()
+	for _, t := range fetched {
+		if existing, exists := b.threads[t.ID]; exists {
+			existing.Name = t.Name
+			existing.LastMessage = t.LastMessage
+			existing.LastISOTime = t.LastISOTime
+			existing.Avatar = t.Avatar
+			existing.UnreadCount = t.UnreadCount
+		} else {
+			b.threads[t.ID] = t
+		}
+	}
+	b.mu.Unlock()
 }
 
 func (b *ZaloBridge) syncStatus() {
@@ -172,6 +204,24 @@ func (b *ZaloBridge) updateThreadLocked(m Message) {
 }
 
 func (b *ZaloBridge) GetMessages(threadID string, limit int) []Message {
+	if threadID != "" && b.connected {
+		resp, err := b.httpClient.Get(fmt.Sprintf("%s/messages?threadId=%s", b.daemonURL, threadID))
+		if err == nil {
+			defer resp.Body.Close()
+			var fetched []Message
+			if err := json.NewDecoder(resp.Body).Decode(&fetched); err == nil && len(fetched) > 0 {
+				b.mu.Lock()
+				for _, m := range fetched {
+					if !b.seenMessageIDs[m.ID] {
+						b.seenMessageIDs[m.ID] = true
+						b.messages = append(b.messages, m)
+					}
+				}
+				b.mu.Unlock()
+			}
+		}
+	}
+
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -283,7 +333,7 @@ func (b *ZaloBridge) GetStatus() GatewayStatus {
 
 	return GatewayStatus{
 		Status:         "running",
-		Port:           54321,
+		Port:           24321,
 		Connected:      b.connected,
 		OwnID:          b.ownID,
 		MasterUID:      b.masterUID,

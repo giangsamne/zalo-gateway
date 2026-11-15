@@ -11,7 +11,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:54321",
+      "url": "http://localhost:24321",
       "description": "Local Zalo Gateway"
     }
   ],

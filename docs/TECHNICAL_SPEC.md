@@ -20,7 +20,7 @@ Zalo Web (`chat.zalo.me`) enforces a single active browser session per personal 
 |                                                           |
 |  +--------------------+     +--------------------------+  |
 |  |   HTTP API & WS    |     |    Embedded Web UI       |  |
-|  |   Port :54321      |     |    (HTML5/CSS/JS)        |  |
+|  |   Port :24321      |     |    (HTML5/CSS/JS)        |  |
 |  +---------+----------+     +------------+-------------+  |
 |            |                             |                |
 |  +---------v-----------------------------v-------------+  |
