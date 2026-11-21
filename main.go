@@ -224,8 +224,11 @@ func main() {
 			return
 		}
 
-		res, _ := bridge.SendMessage(targetID, req.Message, req.IsGroup)
+		res, err := bridge.SendMessage(targetID, req.Message, req.IsGroup)
 		w.Header().Set("Content-Type", "application/json")
+		if err != nil || !res.Success {
+			w.WriteHeader(http.StatusBadGateway)
+		}
 		_ = json.NewEncoder(w).Encode(res)
 	})
 

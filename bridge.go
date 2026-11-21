@@ -289,6 +289,14 @@ func (b *ZaloBridge) SendMessage(threadID, message string, isGroup bool) (*SendM
 	b.lastSentTime = time.Now()
 	b.mu.Unlock()
 
+	clearDedup := func() {
+		b.mu.Lock()
+		if b.lastSentThread == threadID && b.lastSentContent == message {
+			b.lastSentTime = time.Time{}
+		}
+		b.mu.Unlock()
+	}
+
 	payload := map[string]interface{}{
 		"threadId": threadID,
 		"message":  message,
@@ -298,6 +306,7 @@ func (b *ZaloBridge) SendMessage(threadID, message string, isGroup bool) (*SendM
 	bodyBytes, _ := json.Marshal(payload)
 	resp, err := b.httpClient.Post(fmt.Sprintf("%s/send", b.daemonURL), "application/json", bytes.NewBuffer(bodyBytes))
 	if err != nil {
+		clearDedup()
 		log.Printf("[Bridge] Send error: %v", err)
 		return &SendMessageResponse{Success: false, Error: err.Error()}, err
 	}
@@ -338,11 +347,13 @@ func (b *ZaloBridge) SendMessage(threadID, message string, isGroup bool) (*SendM
 		return &SendMessageResponse{Success: true, MessageID: selfMsg.ID}, nil
 	}
 
+	clearDedup()
 	errMsg := res.Error
 	if errMsg == "" {
 		errMsg = "Không thể gửi tin nhắn qua Zalo"
 	}
-	return &SendMessageResponse{Success: false, Error: errMsg}, fmt.Errorf(errMsg)
+	log.Printf("[Bridge] Send failed (HTTP %d) to %s: %s", resp.StatusCode, threadID, errMsg)
+	return &SendMessageResponse{Success: false, Error: errMsg}, fmt.Errorf("%s", errMsg)
 }
 
 func (b *ZaloBridge) GetStatus() GatewayStatus {

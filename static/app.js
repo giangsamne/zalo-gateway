@@ -49,7 +49,10 @@ async function initApp() {
   await loadThreads();
 
   // Start polling
-  threadPollTimer = setInterval(loadThreads, 4000);
+  threadPollTimer = setInterval(() => {
+    checkStatus();
+    loadThreads();
+  }, 4000);
 }
 
 function initEventListeners() {
@@ -120,6 +123,16 @@ async function checkStatus() {
         dot.classList.remove('connected');
         qrStatusText.textContent = 'Chưa kết nối - Quét mã QR';
       }
+    }
+
+    const onlineDot = document.getElementById('online-dot');
+    if (onlineDot) {
+      onlineDot.style.backgroundColor = isConnected ? '#22b14c' : '#e53935';
+    }
+    if (!isConnected && activeChatStatus) {
+      activeChatStatus.textContent = 'Mất kết nối Zalo PC Desktop Engine';
+    } else if (isConnected && activeChatStatus && currentThreadId) {
+      activeChatStatus.textContent = 'Trực tuyến • Zalo PC Desktop Engine';
     }
   } catch (err) {
     console.error('Status error:', err);
@@ -335,6 +348,8 @@ async function sendMessage() {
       tempBubble.querySelector('.bubble-meta').innerHTML = `<span>Vừa xong</span><span>✓✓</span>`;
       // Reload thread snippet
       setTimeout(loadThreads, 1000);
+    } else {
+      tempBubble.querySelector('.bubble-meta').innerHTML = `<span style="color:#e53935">Lỗi gửi: ${escapeHtml(result.error || 'Không rõ nguyên nhân')}</span>`;
     }
   } catch (err) {
     console.error('Send error:', err);
