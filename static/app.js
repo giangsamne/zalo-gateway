@@ -1,8 +1,9 @@
 // ==========================================================================
-// Zalo Web & Gateway Frontend Application
+// Zalo Gateway - Minimalist Frontend Application
 // ==========================================================================
 
 const API_BASE = '/api/v1';
+const FALLBACK_AVATAR = '/static/zalo-assets/assets/logo-new.146dfa01c78183631d33b77999a18288.svg';
 
 let currentThreadId = null;
 let currentThreadName = null;
@@ -19,21 +20,29 @@ let lastMessagesSig = '';
 // DOM Elements
 const convList = document.getElementById('conv-list');
 const searchInput = document.getElementById('contact-search-input');
+const btnClearSearch = document.getElementById('btn-clear-search');
 const chatHeader = document.getElementById('chat-header');
 const activeChatName = document.getElementById('active-chat-name');
 const activeChatAvatar = document.getElementById('active-chat-avatar');
 const activeChatStatus = document.getElementById('active-chat-status');
+const activeThreadIdText = document.getElementById('active-thread-id-text');
+const btnCopyThreadId = document.getElementById('btn-copy-thread-id');
+const btnRefreshChat = document.getElementById('btn-refresh-chat');
 const chatMessages = document.getElementById('chat-messages');
 const chatFooter = document.getElementById('chat-footer');
 const richInput = document.getElementById('richInput');
 const btnSendMsg = document.getElementById('btn-send-msg');
 const welcomeCard = document.getElementById('welcome-card');
 
+const btnLoginModal = document.getElementById('btn-login-modal');
+const onlineDot = document.getElementById('online-dot');
+const statusLabel = document.getElementById('status-label');
+
 const modalQR = document.getElementById('modal-qr');
 const qrImage = document.getElementById('qr-image');
 const qrLoading = document.getElementById('qr-loading');
 const qrStatusText = document.getElementById('qr-status-text');
-const btnLoginModal = document.getElementById('btn-login-modal');
+const btnRefreshQR = document.getElementById('btn-refresh-qr');
 
 const modalWebhooks = document.getElementById('modal-webhooks');
 const btnOpenWebhooks = document.getElementById('btn-open-webhooks');
@@ -53,7 +62,7 @@ async function initApp() {
   await loadThreads();
   connectWebSocket();
 
-  // Start fallback polling every 2s
+  // Fallback polling every 2s
   threadPollTimer = setInterval(() => {
     checkStatus();
     loadThreads();
@@ -66,7 +75,7 @@ async function initApp() {
 function applyThreadFilterAndRender() {
   const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
   const filtered = query
-    ? allThreads.filter(t => t.name.toLowerCase().includes(query) || (t.lastMessage && t.lastMessage.toLowerCase().includes(query)))
+    ? allThreads.filter(t => (t.name || '').toLowerCase().includes(query) || (t.lastMessage && t.lastMessage.toLowerCase().includes(query)))
     : allThreads;
   renderThreads(filtered);
 }
@@ -122,19 +131,37 @@ function connectWebSocket() {
   };
 }
 
+function closeModal(modalId) {
+  const el = document.getElementById(modalId);
+  if (el) el.classList.remove('open');
+  if (modalId === 'modal-qr' && qrPollTimer) {
+    clearInterval(qrPollTimer);
+    qrPollTimer = null;
+  }
+}
+
 function initEventListeners() {
-  // Search input filter
+  // Search input filter & clear button
   searchInput.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    renderThreads(allThreads.filter(t => t.name.toLowerCase().includes(query) || (t.lastMessage && t.lastMessage.toLowerCase().includes(query))));
+    btnClearSearch.style.display = e.target.value ? 'flex' : 'none';
+    lastThreadsSig = '';
+    applyThreadFilterAndRender();
   });
 
-  // Send message button click
-  btnSendMsg.addEventListener('click', () => {
-    sendMessage();
+  btnClearSearch.addEventListener('click', () => {
+    searchInput.value = '';
+    btnClearSearch.style.display = 'none';
+    lastThreadsSig = '';
+    applyThreadFilterAndRender();
+    searchInput.focus();
   });
 
-  // Enter to send, Shift+Enter for newline
+  // Auto-resize textarea & Enter to send
+  richInput.addEventListener('input', () => {
+    richInput.style.height = 'auto';
+    richInput.style.height = Math.min(richInput.scrollHeight, 120) + 'px';
+  });
+
   richInput.addEventListener('keydown', (e) => {
     if (e.isComposing || e.keyCode === 229) return;
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -143,9 +170,56 @@ function initEventListeners() {
     }
   });
 
+  btnSendMsg.addEventListener('click', () => {
+    sendMessage();
+  });
+
+  // Copy Thread ID
+  btnCopyThreadId.addEventListener('click', async () => {
+    if (!currentThreadId) return;
+    try {
+      await navigator.clipboard.writeText(currentThreadId);
+    } catch {
+      const tmp = document.createElement('input');
+      tmp.value = currentThreadId;
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand('copy');
+      document.body.removeChild(tmp);
+    }
+    activeThreadIdText.textContent = '✓ Đã chép ID';
+    setTimeout(() => {
+      if (currentThreadId) {
+        activeThreadIdText.textContent = `ID: ${currentThreadId}`;
+      }
+    }, 1500);
+  });
+
+  // Manual Refresh chat
+  btnRefreshChat.addEventListener('click', () => {
+    lastThreadsSig = '';
+    lastMessagesSig = '';
+    loadThreads();
+    if (currentThreadId && !isSending) {
+      loadMessages(currentThreadId, false);
+    }
+  });
+
+  // Fallback avatar if external URL fails
+  activeChatAvatar.addEventListener('error', () => {
+    if (!activeChatAvatar.src.endsWith(FALLBACK_AVATAR)) {
+      activeChatAvatar.src = FALLBACK_AVATAR;
+    }
+  });
+
   // Open QR modal
   btnLoginModal.addEventListener('click', () => {
     openQRModal();
+  });
+
+  // Force refresh QR code
+  btnRefreshQR.addEventListener('click', () => {
+    refreshQRCode(true);
   });
 
   // Open Webhooks modal
@@ -159,14 +233,17 @@ function initEventListeners() {
     saveWebhook();
   });
 
-  // Modal close buttons
+  // Modal close buttons & backdrop click
   document.querySelectorAll('[data-close]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const targetId = btn.getAttribute('data-close');
-      document.getElementById(targetId).classList.remove('open');
-      if (targetId === 'modal-qr' && qrPollTimer) {
-        clearInterval(qrPollTimer);
-        qrPollTimer = null;
+      closeModal(btn.getAttribute('data-close'));
+    });
+  });
+
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closeModal(overlay.id);
       }
     });
   });
@@ -183,23 +260,26 @@ async function checkStatus() {
 
     const dot = document.querySelector('.dot-status');
     if (dot) {
-      if (isConnected) {
-        dot.classList.add('connected');
-        qrStatusText.textContent = 'Đã kết nối Zalo PC Desktop';
-      } else {
-        dot.classList.remove('connected');
-        qrStatusText.textContent = 'Chưa kết nối - Quét mã QR';
-      }
+      dot.classList.toggle('connected', isConnected);
+      qrStatusText.textContent = isConnected ? 'Đã kết nối Zalo PC Desktop' : 'Chưa kết nối - Quét mã QR';
     }
 
-    const onlineDot = document.getElementById('online-dot');
     if (onlineDot) {
-      onlineDot.style.backgroundColor = isConnected ? '#22b14c' : '#e53935';
+      onlineDot.classList.toggle('online', isConnected);
+      onlineDot.classList.toggle('offline', !isConnected);
     }
+    if (btnLoginModal) {
+      btnLoginModal.classList.toggle('online', isConnected);
+      btnLoginModal.classList.toggle('offline', !isConnected);
+    }
+    if (statusLabel) {
+      statusLabel.textContent = isConnected ? 'Trực tuyến' : 'Mất kết nối';
+    }
+
     if (!isConnected && activeChatStatus) {
       activeChatStatus.textContent = 'Mất kết nối Zalo PC Desktop Engine';
     } else if (isConnected && activeChatStatus && currentThreadId) {
-      activeChatStatus.textContent = 'Trực tuyến • Zalo PC Desktop Engine';
+      activeChatStatus.textContent = 'Trực tuyến';
     }
   } catch (err) {
     console.error('Status error:', err);
@@ -208,37 +288,46 @@ async function checkStatus() {
 
 async function openQRModal() {
   modalQR.classList.add('open');
-  await refreshQRCode();
+  await refreshQRCode(false);
 
   if (!qrPollTimer) {
     qrPollTimer = setInterval(async () => {
-      await refreshQRCode();
+      await refreshQRCode(false);
       await checkStatus();
       if (isConnected) {
         clearInterval(qrPollTimer);
         qrPollTimer = null;
-        setTimeout(() => modalQR.classList.remove('open'), 1000);
+        setTimeout(() => closeModal('modal-qr'), 1000);
       }
     }, 4000);
   }
 }
 
-async function refreshQRCode() {
+async function refreshQRCode(force = false) {
+  qrLoading.innerHTML = '<div class="spinner"></div><span>Đang lấy mã QR từ Zalo PC...</span>';
   qrLoading.style.display = 'flex';
+  qrImage.style.display = 'none';
   try {
-    const res = await fetch(`${API_BASE}/login/qr`);
+    const res = await fetch(`${API_BASE}/login/qr${force ? '?force=true' : ''}`, {
+      method: force ? 'POST' : 'GET'
+    });
     const data = await res.json();
 
     if (data.status === 'qr_ready' && data.qr_image_base64) {
       qrImage.src = data.qr_image_base64;
+      qrImage.style.display = 'block';
       qrLoading.style.display = 'none';
-      qrStatusText.textContent = 'Mã QR mới sẵn sàng. Hãy quét bằng điện thoại!';
-    } else if (data.connected) {
-      qrLoading.innerHTML = '<span style="color:#22b14c; font-weight:600;">✓ Đã đăng nhập Zalo PC thành công!</span>';
+      qrStatusText.textContent = 'Quét mã QR bằng Zalo trên điện thoại';
+    } else if (data.connected || data.status === 'connected') {
+      qrLoading.innerHTML = '<span style="color:#10b981; font-weight:600;">✓ Đã đăng nhập Zalo PC</span>';
+      qrLoading.style.display = 'flex';
+    } else {
+      qrLoading.innerHTML = '<span style="color:#64748b;">Chưa có mã QR. Nhấn "Lấy mã QR mới" nếu cần đăng nhập lại.</span>';
       qrLoading.style.display = 'flex';
     }
   } catch (err) {
     console.error('QR fetch error:', err);
+    qrLoading.innerHTML = '<span style="color:#ef4444;">Không kết nối được tới Zalo Gateway</span>';
   }
 }
 
@@ -261,7 +350,7 @@ async function loadThreads() {
 function renderThreads(threads) {
   if (!threads || threads.length === 0) {
     lastThreadsSig = '';
-    convList.innerHTML = '<div class="conv-loading"><span>Chưa có cuộc trò chuyện nào</span></div>';
+    convList.innerHTML = '<div class="conv-loading"><span>Không có cuộc trò chuyện nào</span></div>';
     return;
   }
 
@@ -277,23 +366,35 @@ function renderThreads(threads) {
     item.className = `conv-item ${t.id === currentThreadId ? 'active' : ''} ${t.unreadCount > 0 ? 'unread' : ''}`;
     item.dataset.threadId = t.id;
 
-    const avatarSrc = t.avatar || '/static/zalo-assets/assets/logo-new.146dfa01c78183631d33b77999a18288.svg';
+    const avatarSrc = t.avatar || FALLBACK_AVATAR;
+    const safeName = escapeHtml(t.name || 'Không rõ');
+    const safeTime = escapeHtml(t.lastIsoTime || '');
+    const safeSnippet = escapeHtml(t.lastMessage || 'Chưa có tin nhắn');
 
     item.innerHTML = `
       <div class="conv-item-avatar-wrap">
-        <img src="${avatarSrc}" class="conv-item-avatar" alt="${t.name}">
+        <img src="${escapeHtml(avatarSrc)}" class="conv-item-avatar" alt="${safeName}">
       </div>
       <div class="conv-item-body">
         <div class="conv-item-header">
-          <span class="conv-item-name">${t.name}</span>
-          <span class="conv-item-time">${t.lastIsoTime || ''}</span>
+          <span class="conv-item-name">${safeName}</span>
+          <span class="conv-item-time">${safeTime}</span>
         </div>
         <div class="conv-item-footer">
-          <span class="conv-item-snippet">${t.lastMessage || 'Bắt đầu cuộc trò chuyện'}</span>
+          <span class="conv-item-snippet">${safeSnippet}</span>
           ${t.unreadCount > 0 ? `<span class="conv-item-badge">${t.unreadCount}</span>` : ''}
         </div>
       </div>
     `;
+
+    const img = item.querySelector('.conv-item-avatar');
+    if (img) {
+      img.addEventListener('error', () => {
+        if (!img.src.endsWith(FALLBACK_AVATAR)) {
+          img.src = FALLBACK_AVATAR;
+        }
+      });
+    }
 
     item.addEventListener('click', () => {
       selectThread(t);
@@ -314,12 +415,16 @@ async function selectThread(t) {
     el.classList.toggle('active', el.dataset.threadId === t.id);
   });
 
-  // Update header
-  activeChatName.textContent = t.name;
-  if (t.avatar) {
-    activeChatAvatar.src = t.avatar;
+  if (welcomeCard) {
+    welcomeCard.style.display = 'none';
   }
-  activeChatStatus.textContent = isConnected ? 'Trực tuyến • Zalo PC Desktop Engine' : 'Mất kết nối Zalo PC Desktop Engine';
+
+  // Show & update header
+  chatHeader.style.display = 'flex';
+  activeChatName.textContent = t.name;
+  activeChatAvatar.src = t.avatar || FALLBACK_AVATAR;
+  activeChatStatus.textContent = isConnected ? 'Trực tuyến' : 'Mất kết nối Zalo PC Desktop Engine';
+  activeThreadIdText.textContent = `ID: ${t.id}`;
 
   // Show footer
   chatFooter.style.display = 'flex';
@@ -350,8 +455,8 @@ function renderMessages(messages, preserveScroll = false) {
     lastMessagesSig = '';
     chatMessages.innerHTML = `
       <div class="day-divider">Hôm nay</div>
-      <div style="text-align:center; color:#72808e; font-size:13px; margin-top:20px;">
-        Chưa có tin nhắn trong hội thoại này. Hãy nhập tin nhắn bên dưới để bắt đầu!
+      <div style="text-align:center; color:#94a3b8; font-size:13px; margin-top:20px;">
+        Chưa có tin nhắn trong hội thoại này.
       </div>
     `;
     return;
@@ -375,7 +480,7 @@ function renderMessages(messages, preserveScroll = false) {
     bubble.className = `chat-bubble ${isSelf ? 'self' : 'peer'}`;
 
     const textContent = escapeHtml(m.content || '').replace(/\n/g, '<br>');
-    const timeText = m.isoTime || m.iso_time || '';
+    const timeText = escapeHtml(m.isoTime || m.iso_time || '');
 
     bubble.innerHTML = `
       <div class="bubble-inner">
@@ -408,8 +513,8 @@ async function sendMessage() {
 
   isSending = true;
   richInput.value = '';
+  richInput.style.height = 'auto';
 
-  // Optimistic UI update
   const tempBubble = document.createElement('div');
   tempBubble.className = 'chat-bubble self';
   tempBubble.innerHTML = `
@@ -437,7 +542,6 @@ async function sendMessage() {
     const result = await res.json();
     if (result.success) {
       tempBubble.querySelector('.bubble-meta').innerHTML = `<span>Vừa xong</span><span>✓✓</span>`;
-      // Reload thread snippet & synced messages
       setTimeout(() => {
         lastMessagesSig = '';
         loadThreads();
@@ -446,11 +550,11 @@ async function sendMessage() {
         }
       }, 600);
     } else {
-      tempBubble.querySelector('.bubble-meta').innerHTML = `<span style="color:#e53935">Lỗi gửi: ${escapeHtml(result.error || 'Không rõ nguyên nhân')}</span>`;
+      tempBubble.querySelector('.bubble-meta').innerHTML = `<span style="color:#ef4444">Lỗi gửi: ${escapeHtml(result.error || 'Không rõ nguyên nhân')}</span>`;
     }
   } catch (err) {
     console.error('Send error:', err);
-    tempBubble.querySelector('.bubble-meta').innerHTML = `<span style="color:red">Lỗi gửi!</span>`;
+    tempBubble.querySelector('.bubble-meta').innerHTML = `<span style="color:#ef4444">Lỗi gửi!</span>`;
   } finally {
     isSending = false;
   }
@@ -472,12 +576,33 @@ async function loadWebhooks() {
     list.forEach(wh => {
       const item = document.createElement('div');
       item.className = 'wh-item';
-      item.style.padding = '10px';
-      item.style.borderBottom = '1px solid #e1e4ea';
+      const eventsText = Array.isArray(wh.events) ? wh.events.join(', ') : '';
       item.innerHTML = `
-        <div style="font-weight:600; font-size:13.5px; color:#081c36;">${wh.url}</div>
-        <div style="font-size:12px; color:#72808e; margin-top:2px;">Events: ${wh.events.join(', ')} • Secret: ${wh.secret ? '••••••••' : 'None'}</div>
+        <div class="wh-info">
+          <div class="wh-url">${escapeHtml(wh.url || '')}</div>
+          <div class="wh-meta">Events: ${escapeHtml(eventsText)} • Secret: ${wh.secret ? '••••••••' : 'None'}</div>
+        </div>
+        <button type="button" class="btn-delete-wh" data-id="${escapeHtml(wh.id || '')}">Xoá</button>
       `;
+
+      const delBtn = item.querySelector('.btn-delete-wh');
+      if (delBtn) {
+        delBtn.addEventListener('click', async () => {
+          const id = delBtn.getAttribute('data-id');
+          if (!id) return;
+          try {
+            const delRes = await fetch(`${API_BASE}/webhooks/${encodeURIComponent(id)}`, {
+              method: 'DELETE'
+            });
+            if (delRes.ok) {
+              await loadWebhooks();
+            }
+          } catch (err) {
+            console.error('Delete webhook error:', err);
+          }
+        });
+      }
+
       webhookList.appendChild(item);
     });
   } catch (err) {
@@ -511,6 +636,6 @@ async function saveWebhook() {
 }
 
 function escapeHtml(str) {
-  return str.replace(/[&<>'"]/g, 
+  return String(str).replace(/[&<>'"]/g,
     tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
 }

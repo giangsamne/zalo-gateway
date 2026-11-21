@@ -1,42 +1,47 @@
 /* ==========================================================================
-   Zalo Web & PC Authentic Design System
+   Zalo Gateway - Minimalist UI Design System
    ========================================================================== */
 
 :root {
-  --zalo-primary: #0068ff;
-  --zalo-primary-hover: #005ae0;
-  --zalo-primary-light: #e5efff;
-  --zalo-bg-rail: #0068ff;
-  --zalo-bg-sidebar: #ffffff;
-  --zalo-bg-chat: #eef0f2;
-  --zalo-bg-bubble-self: #e5efff;
-  --zalo-bg-bubble-peer: #ffffff;
-  --zalo-border: #e1e4ea;
-  --zalo-text-primary: #081c36;
-  --zalo-text-secondary: #72808e;
-  --zalo-text-muted: #8b96a5;
-  --zalo-red-badge: #d83a56;
-  --zalo-green-online: #22b14c;
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f1f5f9;
+  --bg-hover: #f1f5f9;
+  --bg-active: #eff6ff;
+  --border: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --bubble-self-bg: #dbeafe;
+  --bubble-self-border: #bfdbfe;
+  --bubble-self-text: #1e3a8a;
+  --bubble-peer-bg: #ffffff;
+  --green: #10b981;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: var(--font-family);
+}
+
+body.app-body {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
-body.zalo-body {
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  background-color: #f4f5f7;
-  color: var(--zalo-text-primary);
-}
-
-.zalo-layout {
+.app-shell {
   display: flex;
   height: 100vh;
   width: 100vw;
@@ -44,117 +49,123 @@ body.zalo-body {
 }
 
 /* ==========================================================================
-   1. CỘT 1: THANH ĐIỀU HƯỚNG BÊN TRÁI (NAV RAIL - 64px)
+   1. LEFT SIDEBAR
    ========================================================================== */
-.nav-rail {
-  width: 64px;
-  background-color: var(--zalo-bg-rail);
+.conv-sidebar {
+  width: 320px;
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
   flex-shrink: 0;
-  user-select: none;
+  height: 100vh;
 }
 
-.nav-top, .nav-bottom {
+.sidebar-topbar {
+  height: 56px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 16px;
-  width: 100%;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.user-avatar-wrap {
-  position: relative;
-  width: 44px;
-  height: 44px;
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 500;
   cursor: pointer;
-  margin-bottom: 8px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.user-avatar {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  background: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.4);
+.status-pill:hover {
+  background-color: #e2e8f0;
+  color: var(--text-primary);
+}
+
+.status-pill.online {
+  background-color: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.status-pill.offline {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
 }
 
 .online-indicator {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 12px;
-  height: 12px;
-  background-color: var(--zalo-green-online);
-  border: 2px solid var(--zalo-bg-rail);
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
+  background-color: var(--amber);
+  flex-shrink: 0;
 }
 
-.nav-tab {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  background: transparent;
-  border: none;
-  border-radius: 10px;
-  color: rgba(255, 255, 255, 0.7);
-  display: flex;
+.online-indicator.online {
+  background-color: var(--green);
+}
+
+.online-indicator.offline {
+  background-color: var(--red);
+}
+
+.icon-pill-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
-}
-
-.nav-tab:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-}
-
-.nav-tab.active {
-  background-color: #ffffff;
-  color: var(--zalo-primary);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-}
-
-.nav-badge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background-color: var(--zalo-red-badge);
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 10px;
-  border: 2px solid var(--zalo-bg-rail);
-}
-
-/* ==========================================================================
-   2. CỘT 2: DANH SÁCH CUỘC TRÒ CHUYỆN (CONVERSATION SIDEBAR - 340px)
-   ========================================================================== */
-.conv-sidebar {
-  width: 340px;
-  background-color: var(--zalo-bg-sidebar);
-  border-right: 1px solid var(--zalo-border);
-  display: flex;
-  flex-direction: column;
   flex-shrink: 0;
-  height: 100vh;
 }
 
+.icon-pill-btn:hover {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: #cbd5e1;
+}
+
+/* Search Bar */
 .conv-header {
-  padding: 14px 16px 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .search-input-wrap {
-  flex: 1;
   position: relative;
   display: flex;
   align-items: center;
@@ -162,132 +173,95 @@ body.zalo-body {
 
 .search-icon {
   position: absolute;
-  left: 12px;
+  left: 11px;
+  color: var(--text-muted);
   pointer-events: none;
 }
 
 #contact-search-input {
   width: 100%;
   height: 36px;
-  padding: 0 12px 0 36px;
-  background-color: #eaedf0;
+  padding: 0 32px 0 34px;
+  background-color: var(--bg-subtle);
   border: 1px solid transparent;
-  border-radius: 6px;
-  font-size: 14px;
-  color: var(--zalo-text-primary);
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: var(--text-primary);
   outline: none;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+}
+
+#contact-search-input::placeholder {
+  color: var(--text-muted);
 }
 
 #contact-search-input:focus {
-  background-color: #ffffff;
-  border-color: var(--zalo-primary);
-  box-shadow: 0 0 0 2px rgba(0, 104, 255, 0.15);
+  background-color: var(--bg-surface);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
-.conv-quick-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.quick-btn {
-  width: 34px;
-  height: 34px;
-  background: transparent;
+.clear-search-btn {
+  position: absolute;
+  right: 6px;
+  width: 24px;
+  height: 24px;
   border: none;
   border-radius: 6px;
-  color: var(--zalo-text-secondary);
+  background: transparent;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s;
 }
 
-.quick-btn:hover {
-  background-color: #f0f2f5;
-  color: var(--zalo-text-primary);
+.clear-search-btn:hover {
+  background-color: #e2e8f0;
+  color: var(--text-primary);
 }
 
-/* Filter tabs */
-.conv-tabs {
-  display: flex;
-  padding: 0 16px 8px;
-  gap: 14px;
-  border-bottom: 1px solid var(--zalo-border);
-}
-
-.tab-item {
-  background: none;
-  border: none;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--zalo-text-secondary);
-  cursor: pointer;
-  padding-bottom: 6px;
-  position: relative;
-}
-
-.tab-item.active {
-  color: var(--zalo-primary);
-  font-weight: 600;
-}
-
-.tab-item.active::after {
-  content: "";
-  position: absolute;
-  bottom: -9px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: var(--zalo-primary);
-  border-radius: 2px;
-}
-
-.tab-arrow {
-  font-size: 9px;
-  margin-left: 2px;
-}
-
-/* Conversation list items */
+/* Conversation List */
 .conv-list {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 0;
+  padding: 6px 0;
 }
 
 .conv-item {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
-  gap: 12px;
+  padding: 10px 14px;
+  margin: 2px 8px;
+  gap: 11px;
+  border-radius: 8px;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.15s;
-  position: relative;
+  transition: background-color 0.12s ease;
 }
 
 .conv-item:hover {
-  background-color: #f3f5f6;
+  background-color: var(--bg-hover);
 }
 
 .conv-item.active {
-  background-color: var(--zalo-primary-light);
+  background-color: var(--bg-active);
 }
 
 .conv-item-avatar-wrap {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
 }
 
 .conv-item-avatar {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   object-fit: cover;
-  background-color: #e1e4ea;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border);
 }
 
 .conv-item-body {
@@ -299,21 +273,26 @@ body.zalo-body {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .conv-item-name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--zalo-text-primary);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.conv-item.active .conv-item-name {
+  color: var(--accent);
+}
+
 .conv-item-time {
-  font-size: 12px;
-  color: var(--zalo-text-muted);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
   flex-shrink: 0;
   margin-left: 8px;
 }
@@ -322,11 +301,12 @@ body.zalo-body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 6px;
 }
 
 .conv-item-snippet {
-  font-size: 13px;
-  color: var(--zalo-text-secondary);
+  font-size: 12.5px;
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -339,17 +319,17 @@ body.zalo-body {
 
 .conv-item.unread .conv-item-snippet {
   font-weight: 600;
-  color: var(--zalo-text-primary);
+  color: var(--text-primary);
 }
 
 .conv-item-badge {
-  background-color: var(--zalo-red-badge);
+  background-color: var(--red);
   color: #ffffff;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  flex-shrink: 0;
 }
 
 .conv-loading {
@@ -357,146 +337,133 @@ body.zalo-body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 48px 20px;
   gap: 12px;
-  color: var(--zalo-text-secondary);
-  font-size: 13.5px;
+  color: var(--text-secondary);
+  font-size: 13px;
 }
 
 /* ==========================================================================
-   3. CỘT 3: KHUNG CHAT CHÍNH (CHAT VIEWPORT)
+   2. MAIN CHAT VIEWPORT
    ========================================================================== */
 .chat-viewport {
   flex: 1;
-  background-color: var(--zalo-bg-chat);
+  background-color: var(--bg-app);
   display: flex;
   flex-direction: column;
   height: 100vh;
+  min-width: 0;
   position: relative;
 }
 
-/* Chat Header */
 .chat-header {
-  height: 64px;
-  background-color: #ffffff;
-  border-bottom: 1px solid var(--zalo-border);
+  height: 60px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
   flex-shrink: 0;
-  z-index: 10;
+  gap: 12px;
 }
 
 .chat-header-left {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.avatar-wrap {
-  position: relative;
-  width: 44px;
-  height: 44px;
+  min-width: 0;
 }
 
 .chat-avatar {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   object-fit: cover;
-  background-color: #e1e4ea;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
-.active-online-dot {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 10px;
-  height: 10px;
-  background-color: var(--zalo-green-online);
-  border: 2px solid #ffffff;
-  border-radius: 50%;
-}
-
-.chat-title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.chat-header-info {
+  min-width: 0;
 }
 
 #active-chat-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--zalo-text-primary);
-}
-
-.chat-badge {
-  font-size: 11px;
-  background-color: #eef0f2;
-  color: var(--zalo-text-secondary);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chat-status-text {
-  font-size: 12.5px;
-  color: var(--zalo-text-muted);
-  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 1px;
 }
 
 .chat-header-right {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.head-tool-btn {
-  width: 38px;
-  height: 38px;
-  background: transparent;
-  border: none;
-  border-radius: 50%;
-  color: var(--zalo-text-secondary);
-  display: flex;
+.ghost-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: var(--font-mono);
   cursor: pointer;
-  transition: background-color 0.15s;
+  transition: all 0.15s ease;
 }
 
-.head-tool-btn:hover {
-  background-color: #f0f2f5;
-  color: var(--zalo-primary);
+.ghost-btn:hover {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: #cbd5e1;
 }
 
-/* Chat Messages Feed */
+.ghost-icon-only {
+  padding: 0 8px;
+  font-family: var(--font-sans);
+}
+
+/* Messages Feed */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 24px;
+  padding: 20px 28px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .day-divider {
   align-self: center;
-  background-color: rgba(0, 0, 0, 0.15);
-  color: #ffffff;
-  font-size: 12px;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 11.5px;
   font-weight: 500;
   padding: 3px 12px;
-  border-radius: 12px;
-  margin: 10px 0;
+  border-radius: 999px;
+  margin: 6px 0 8px;
 }
 
 .chat-bubble {
-  max-width: 65%;
+  max-width: min(68%, 620px);
   display: flex;
   flex-direction: column;
-  position: relative;
   word-break: break-word;
 }
 
@@ -510,180 +477,175 @@ body.zalo-body {
 
 .bubble-inner {
   padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 14.5px;
-  line-height: 1.45;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .chat-bubble.self .bubble-inner {
-  background-color: var(--zalo-bg-bubble-self);
-  border: 1px solid #cce1ff;
-  border-bottom-right-radius: 2px;
+  background-color: var(--bubble-self-bg);
+  border: 1px solid var(--bubble-self-border);
+  color: var(--bubble-self-text);
+  border-bottom-right-radius: 4px;
 }
 
 .chat-bubble.peer .bubble-inner {
-  background-color: var(--zalo-bg-bubble-peer);
-  border: 1px solid var(--zalo-border);
-  border-bottom-left-radius: 2px;
+  background-color: var(--bubble-peer-bg);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-bottom-left-radius: 4px;
 }
 
 .bubble-meta {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 5px;
   margin-top: 4px;
   font-size: 11px;
-  color: var(--zalo-text-muted);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
 }
 
 .chat-bubble.self .bubble-meta {
-  color: #005ae0;
+  color: #3b82f6;
 }
 
-/* Welcome Screen Card */
+/* Minimalist Welcome Empty State */
 .welcome-card {
   align-self: center;
   margin: auto;
   text-align: center;
-  max-width: 480px;
-  padding: 40px 24px;
+  max-width: 440px;
+  padding: 32px 24px;
 }
 
-.welcome-logo {
-  height: 64px;
-  margin-bottom: 20px;
+.welcome-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  background-color: var(--bg-active);
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 14px;
 }
 
-.welcome-card h2 {
-  font-size: 20px;
+.welcome-card h1 {
+  font-size: 24px;
   font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
   margin-bottom: 10px;
 }
 
 .welcome-card p {
   font-size: 14px;
-  color: var(--zalo-text-secondary);
-  line-height: 1.5;
-  margin-bottom: 24px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 20px;
 }
 
-.feature-pills {
+.welcome-links {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.pill {
-  background: #ffffff;
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--zalo-border);
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--zalo-text-primary);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-
-/* Chat Footer & Input Toolbar */
-.chat-footer {
-  background-color: #ffffff;
-  border-top: 1px solid var(--zalo-border);
-  padding: 8px 16px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.chat-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.tool-left, .tool-right {
-  display: flex;
-  gap: 6px;
-}
-
-.tool-icon-btn {
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: var(--zalo-text-secondary);
-  display: flex;
-  align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.tool-icon-btn:hover {
-  background-color: #f0f2f5;
-  color: var(--zalo-primary);
+.doc-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 13px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.doc-link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background-color: var(--bg-active);
+}
+
+/* Chat Input Footer */
+.chat-footer {
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  padding: 12px 20px;
+  flex-shrink: 0;
 }
 
 .chat-input-row {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
-  position: relative;
+  gap: 10px;
 }
 
 #richInput {
   flex: 1;
-  min-height: 40px;
+  min-height: 42px;
   max-height: 120px;
   padding: 10px 14px;
-  border: 1px solid var(--zalo-border);
-  border-radius: 6px;
-  font-size: 14.5px;
-  line-height: 1.4;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
   outline: none;
   resize: none;
-  color: var(--zalo-text-primary);
-  background-color: #ffffff;
-  transition: border-color 0.2s;
+  color: var(--text-primary);
+  background-color: var(--bg-app);
+  transition: all 0.15s ease;
 }
 
 #richInput:focus {
-  border-color: var(--zalo-primary);
+  background-color: var(--bg-surface);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .send-action-btn {
-  width: 40px;
-  height: 40px;
-  background-color: var(--zalo-primary);
+  width: 42px;
+  height: 42px;
+  background-color: var(--accent);
   color: #ffffff;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s;
+  transition: background-color 0.15s ease;
   flex-shrink: 0;
 }
 
 .send-action-btn:hover {
-  background-color: var(--zalo-primary-hover);
+  background-color: var(--accent-hover);
 }
 
-/* Modals */
+/* ==========================================================================
+   3. MODALS
+   ========================================================================== */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
   display: none;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 16px;
 }
 
 .modal-overlay.open {
@@ -691,46 +653,58 @@ body.zalo-body {
 }
 
 .modal-box {
-  background: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 420px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.16);
+  width: 100%;
+  max-width: 400px;
   overflow: hidden;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.16s ease;
 }
 
 .modal-box.modal-lg {
-  max-width: 600px;
+  max-width: 560px;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.96); }
+  from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
 }
 
 .modal-header {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--zalo-border);
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .modal-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .modal-close {
-  background: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
   border: none;
-  font-size: 22px;
-  color: var(--zalo-text-muted);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--text-muted);
   cursor: pointer;
+}
+
+.modal-close:hover {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 18px;
 }
 
 .qr-modal-body {
@@ -739,19 +713,19 @@ body.zalo-body {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  gap: 14px;
 }
 
 .qr-container {
-  width: 220px;
-  height: 220px;
-  border: 1px solid var(--zalo-border);
-  border-radius: 8px;
+  width: 210px;
+  height: 210px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #fafbfc;
-  margin-bottom: 16px;
+  background-color: var(--bg-app);
   overflow: hidden;
 }
 
@@ -763,40 +737,29 @@ body.zalo-body {
 
 .qr-overlay-loading {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.95);
+  inset: 0;
+  background: rgba(255, 255, 255, 0.96);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  padding: 16px;
   font-size: 13px;
-  color: var(--zalo-text-secondary);
+  color: var(--text-secondary);
 }
 
 .spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid #e1e4ea;
-  border-top-color: var(--zalo-primary);
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.75s linear infinite;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-.qr-instructions {
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--zalo-text-secondary);
-  text-align: left;
-  width: 100%;
-  margin-bottom: 16px;
 }
 
 .qr-status-box {
@@ -804,24 +767,43 @@ body.zalo-body {
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: var(--zalo-text-secondary);
+  color: var(--text-secondary);
 }
 
 .dot-status {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #ff9800;
+  background-color: var(--amber);
 }
 
 .dot-status.connected {
-  background-color: var(--zalo-green-online);
+  background-color: var(--green);
 }
 
+.btn-secondary {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-subtle);
+  border-color: #cbd5e1;
+}
+
+/* Webhook Modal */
 .webhook-desc {
-  font-size: 13.5px;
-  color: var(--zalo-text-secondary);
-  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  line-height: 1.5;
 }
 
 .webhook-form {
@@ -831,29 +813,145 @@ body.zalo-body {
 }
 
 .webhook-form input {
-  padding: 10px 12px;
-  border: 1px solid var(--zalo-border);
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13.5px;
   outline: none;
+  color: var(--text-primary);
 }
 
 .webhook-form input:focus {
-  border-color: var(--zalo-primary);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .btn-primary {
-  padding: 10px 16px;
-  background-color: var(--zalo-primary);
+  padding: 9px 14px;
+  background-color: var(--accent);
   color: #ffffff;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s;
+  transition: background-color 0.15s ease;
 }
 
 .btn-primary:hover {
-  background-color: var(--zalo-primary-hover);
+  background-color: var(--accent-hover);
+}
+
+.modal-section-title {
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.webhook-list {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg-app);
+}
+
+.empty-wh {
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.wh-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg-surface);
+}
+
+.wh-item:last-child {
+  border-bottom: none;
+}
+
+.wh-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.wh-url {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.wh-meta {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.btn-delete-wh {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+  background-color: #fef2f2;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btn-delete-wh:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.modal-footer-links {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Custom thin scrollbars */
+.conv-list::-webkit-scrollbar,
+.chat-messages::-webkit-scrollbar,
+.webhook-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.conv-list::-webkit-scrollbar-thumb,
+.chat-messages::-webkit-scrollbar-thumb,
+.webhook-list::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 999px;
+}
+
+.conv-list::-webkit-scrollbar-track,
+.chat-messages::-webkit-scrollbar-track,
+.webhook-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (max-width: 720px) {
+  .conv-sidebar {
+    width: 260px;
+  }
+  .chat-messages {
+    padding: 16px;
+  }
+  .chat-header {
+    padding: 0 14px;
+  }
 }
