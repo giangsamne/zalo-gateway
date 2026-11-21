@@ -114,6 +114,11 @@ func (b *ZaloBridge) syncThreads() {
 			existing.LastISOTime = t.LastISOTime
 			existing.Avatar = t.Avatar
 			existing.UnreadCount = t.UnreadCount
+			if t.LastTimestamp > 0 {
+				if existing.LastTimestamp <= t.LastTimestamp || time.Since(time.UnixMilli(existing.LastTimestamp)) > 2*time.Second {
+					existing.LastTimestamp = t.LastTimestamp
+				}
+			}
 		} else {
 			b.threads[t.ID] = t
 		}
@@ -235,6 +240,21 @@ func (b *ZaloBridge) GetMessages(threadID string, limit int) []Message {
 			if err := json.NewDecoder(resp.Body).Decode(&fetched); err == nil && len(fetched) > 0 {
 				b.mu.Lock()
 				for _, m := range fetched {
+					if strings.HasPrefix(m.ID, "bb_msg_id_") {
+						filtered := b.messages[:0]
+						for _, prev := range b.messages {
+							diff := prev.Timestamp - m.Timestamp
+							if diff < 0 {
+								diff = -diff
+							}
+							if strings.HasPrefix(prev.ID, "self_") && prev.ThreadID == m.ThreadID && prev.Content == m.Content && diff <= 15000 {
+								delete(b.seenMessageIDs, prev.ID)
+								continue
+							}
+							filtered = append(filtered, prev)
+						}
+						b.messages = filtered
+					}
 					if !b.seenMessageIDs[m.ID] {
 						b.seenMessageIDs[m.ID] = true
 						b.messages = append(b.messages, m)
@@ -255,6 +275,13 @@ func (b *ZaloBridge) GetMessages(threadID string, limit int) []Message {
 		}
 	}
 
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Timestamp != result[j].Timestamp {
+			return result[i].Timestamp < result[j].Timestamp
+		}
+		return result[i].ID < result[j].ID
+	})
+
 	if limit > 0 && len(result) > limit {
 		result = result[len(result)-limit:]
 	}
@@ -271,7 +298,10 @@ func (b *ZaloBridge) GetThreads() []*Thread {
 	}
 
 	sort.Slice(list, func(i, j int) bool {
-		return list[i].LastTimestamp > list[j].LastTimestamp
+		if list[i].LastTimestamp != list[j].LastTimestamp {
+			return list[i].LastTimestamp > list[j].LastTimestamp
+		}
+		return list[i].ID < list[j].ID
 	})
 	return list
 }

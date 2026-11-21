@@ -184,7 +184,11 @@ async function loadThreads() {
     const threads = await res.json();
     if (Array.isArray(threads)) {
       allThreads = threads;
-      renderThreads(threads);
+      const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+      const filtered = query
+        ? allThreads.filter(t => t.name.toLowerCase().includes(query) || (t.lastMessage && t.lastMessage.toLowerCase().includes(query)))
+        : allThreads;
+      renderThreads(filtered);
     }
   } catch (err) {
     console.error('Load threads error:', err);
@@ -282,19 +286,22 @@ function renderMessages(messages) {
 
   chatMessages.innerHTML = `<div class="day-divider">Hôm nay</div>`;
 
-  messages.forEach(m => {
-    const bubble = document.createElement('div');
-    bubble.className = `chat-bubble ${m.is_self ? 'self' : 'peer'}`;
+  const sorted = [...messages].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
-    const textContent = escapeHtml(m.content).replace(/\n/g, '<br>');
-    const timeText = m.iso_time || '';
+  sorted.forEach(m => {
+    const isSelf = !!(m.isSelf ?? m.is_self);
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${isSelf ? 'self' : 'peer'}`;
+
+    const textContent = escapeHtml(m.content || '').replace(/\n/g, '<br>');
+    const timeText = m.isoTime || m.iso_time || '';
 
     bubble.innerHTML = `
       <div class="bubble-inner">
         <div class="bubble-content">${textContent}</div>
         <div class="bubble-meta">
           <span>${timeText}</span>
-          ${m.is_self ? '<span>✓✓</span>' : ''}
+          ${isSelf ? '<span>✓✓</span>' : ''}
         </div>
       </div>
     `;
