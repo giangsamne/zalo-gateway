@@ -33,6 +33,7 @@ type ZaloBridge struct {
 	lastSentThread  string
 	lastSentContent string
 	lastSentTime    time.Time
+	msgSeeded       bool
 }
 
 func NewZaloBridge(daemonURL string, webhookMgr *WebhookManager) *ZaloBridge {
@@ -107,8 +108,21 @@ func (b *ZaloBridge) syncThreads() {
 	}
 
 	b.mu.Lock()
+	changed := false
+	prevTopID := ""
+	var maxPrevTS int64
+	for id, existing := range b.threads {
+		if existing.LastTimestamp > maxPrevTS {
+			maxPrevTS = existing.LastTimestamp
+			prevTopID = id
+		}
+	}
+
 	for _, t := range fetched {
 		if existing, exists := b.threads[t.ID]; exists {
+			if existing.Name != t.Name || existing.LastMessage != t.LastMessage || existing.LastISOTime != t.LastISOTime || existing.UnreadCount != t.UnreadCount {
+				changed = true
+			}
 			existing.Name = t.Name
 			existing.LastMessage = t.LastMessage
 			existing.LastISOTime = t.LastISOTime
@@ -121,9 +135,26 @@ func (b *ZaloBridge) syncThreads() {
 			}
 		} else {
 			b.threads[t.ID] = t
+			changed = true
 		}
 	}
+
+	newTopID := ""
+	var maxNewTS int64
+	for id, existing := range b.threads {
+		if existing.LastTimestamp > maxNewTS {
+			maxNewTS = existing.LastTimestamp
+			newTopID = id
+		}
+	}
+	if prevTopID != newTopID {
+		changed = true
+	}
 	b.mu.Unlock()
+
+	if changed && b.hub != nil {
+		b.hub.Broadcast("threads_updated", b.GetThreads())
+	}
 }
 
 func (b *ZaloBridge) syncStatus() {
@@ -172,6 +203,9 @@ func (b *ZaloBridge) syncStatus() {
 }
 
 func (b *ZaloBridge) syncMessages() {
+	if !b.connected {
+		return
+	}
 	resp, err := b.httpClient.Get(fmt.Sprintf("%s/messages?limit=50", b.daemonURL))
 	if err != nil {
 		return
@@ -184,23 +218,53 @@ func (b *ZaloBridge) syncMessages() {
 	}
 
 	b.mu.Lock()
-	newIncoming := make([]Message, 0)
+	newEvents := make([]Message, 0)
 	for _, m := range fetched {
+		if m.ID == "" || m.ThreadID == "" {
+			continue
+		}
+		replacedOptimistic := false
+		if strings.HasPrefix(m.ID, "bb_msg_id_") {
+			filtered := b.messages[:0]
+			for _, prev := range b.messages {
+				diff := prev.Timestamp - m.Timestamp
+				if diff < 0 {
+					diff = -diff
+				}
+				if strings.HasPrefix(prev.ID, "self_") && prev.ThreadID == m.ThreadID && prev.Content == m.Content && diff <= 15000 {
+					delete(b.seenMessageIDs, prev.ID)
+					replacedOptimistic = true
+					continue
+				}
+				filtered = append(filtered, prev)
+			}
+			b.messages = filtered
+		}
 		if !b.seenMessageIDs[m.ID] {
 			b.seenMessageIDs[m.ID] = true
 			b.messages = append(b.messages, m)
-			b.updateThreadLocked(m)
-			newIncoming = append(newIncoming, m)
+			if b.msgSeeded && !replacedOptimistic {
+				newEvents = append(newEvents, m)
+			}
 		}
 	}
+	b.msgSeeded = true
 	b.mu.Unlock()
 
-	// Notify for each new message
-	for _, msg := range newIncoming {
-		if b.hub != nil {
-			b.hub.Broadcast("message_received", msg)
+	// Notify for each genuinely new message
+	for _, msg := range newEvents {
+		if msg.IsSelf {
+			if b.hub != nil {
+				b.hub.Broadcast("message_sent", msg)
+			}
+		} else {
+			if b.hub != nil {
+				b.hub.Broadcast("message_received", msg)
+			}
+			if msg.Timestamp >= b.startTime.UnixMilli()-5000 {
+				b.webhookMgr.Dispatch("message.received", msg)
+			}
 		}
-		b.webhookMgr.Dispatch("message.received", msg)
 	}
 }
 

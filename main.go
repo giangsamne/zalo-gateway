@@ -63,8 +63,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize embedded static fs: %v", err)
 	}
-	fileServer := http.FileServer(http.FS(subFS))
-	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
+	fileServer := http.StripPrefix("/static/", http.FileServer(http.FS(subFS)))
+	mux.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache")
+		fileServer.ServeHTTP(w, r)
+	})
 
 	// Web UI Root
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

@@ -11,6 +11,10 @@ let isConnected = false;
 let isSending = false;
 let qrPollTimer = null;
 let threadPollTimer = null;
+let ws = null;
+let wsReconnectTimer = null;
+let lastThreadsSig = '';
+let lastMessagesSig = '';
 
 // DOM Elements
 const convList = document.getElementById('conv-list');
@@ -47,12 +51,75 @@ window.addEventListener('DOMContentLoaded', () => {
 async function initApp() {
   await checkStatus();
   await loadThreads();
+  connectWebSocket();
 
-  // Start polling
+  // Start fallback polling every 2s
   threadPollTimer = setInterval(() => {
     checkStatus();
     loadThreads();
-  }, 4000);
+    if (currentThreadId && !isSending) {
+      loadMessages(currentThreadId, true);
+    }
+  }, 2000);
+}
+
+function applyThreadFilterAndRender() {
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const filtered = query
+    ? allThreads.filter(t => t.name.toLowerCase().includes(query) || (t.lastMessage && t.lastMessage.toLowerCase().includes(query)))
+    : allThreads;
+  renderThreads(filtered);
+}
+
+function connectWebSocket() {
+  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+    return;
+  }
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  try {
+    ws = new WebSocket(`${proto}//${location.host}/ws`);
+  } catch (err) {
+    console.error('WebSocket init error:', err);
+    return;
+  }
+
+  ws.onmessage = (event) => {
+    try {
+      const frame = JSON.parse(event.data);
+      const { type, data } = frame || {};
+      if (type === 'init' || type === 'threads_updated') {
+        const threads = type === 'init' ? (data && data.threads) : data;
+        if (Array.isArray(threads)) {
+          allThreads = threads;
+          applyThreadFilterAndRender();
+        }
+      } else if (type === 'message_received' || type === 'message_sent') {
+        const msgTid = data && (data.threadId || data.thread_id);
+        if (msgTid && msgTid === currentThreadId && !isSending) {
+          loadMessages(currentThreadId, true);
+        }
+        loadThreads();
+      } else if (type === 'status_updated') {
+        checkStatus();
+      }
+    } catch (e) {
+      console.error('WS parse error:', e);
+    }
+  };
+
+  ws.onclose = () => {
+    ws = null;
+    if (!wsReconnectTimer) {
+      wsReconnectTimer = setTimeout(() => {
+        wsReconnectTimer = null;
+        connectWebSocket();
+      }, 3000);
+    }
+  };
+
+  ws.onerror = () => {
+    try { ws.close(); } catch (e) {}
+  };
 }
 
 function initEventListeners() {
@@ -184,11 +251,7 @@ async function loadThreads() {
     const threads = await res.json();
     if (Array.isArray(threads)) {
       allThreads = threads;
-      const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-      const filtered = query
-        ? allThreads.filter(t => t.name.toLowerCase().includes(query) || (t.lastMessage && t.lastMessage.toLowerCase().includes(query)))
-        : allThreads;
-      renderThreads(filtered);
+      applyThreadFilterAndRender();
     }
   } catch (err) {
     console.error('Load threads error:', err);
@@ -197,9 +260,16 @@ async function loadThreads() {
 
 function renderThreads(threads) {
   if (!threads || threads.length === 0) {
+    lastThreadsSig = '';
     convList.innerHTML = '<div class="conv-loading"><span>Chưa có cuộc trò chuyện nào</span></div>';
     return;
   }
+
+  const sig = currentThreadId + '||' + threads.map(t => [t.id, t.name, t.lastMessage, t.lastIsoTime, t.unreadCount].join('\x1f')).join('\x1e');
+  if (sig === lastThreadsSig) {
+    return;
+  }
+  lastThreadsSig = sig;
 
   convList.innerHTML = '';
   threads.forEach(t => {
@@ -236,6 +306,8 @@ function renderThreads(threads) {
 async function selectThread(t) {
   currentThreadId = t.id;
   currentThreadName = t.name;
+  lastThreadsSig = '';
+  lastMessagesSig = '';
 
   // Highlight in sidebar
   document.querySelectorAll('.conv-item').forEach(el => {
@@ -247,7 +319,7 @@ async function selectThread(t) {
   if (t.avatar) {
     activeChatAvatar.src = t.avatar;
   }
-  activeChatStatus.textContent = 'Trực tuyến • Zalo PC Desktop Engine';
+  activeChatStatus.textContent = isConnected ? 'Trực tuyến • Zalo PC Desktop Engine' : 'Mất kết nối Zalo PC Desktop Engine';
 
   // Show footer
   chatFooter.style.display = 'flex';
@@ -255,26 +327,27 @@ async function selectThread(t) {
   richInput.focus();
 
   // Load message history
-  await loadMessages(t.id);
+  await loadMessages(t.id, false);
 }
 
 // --------------------------------------------------------------------------
 // Messages
 // --------------------------------------------------------------------------
-async function loadMessages(threadId) {
+async function loadMessages(threadId, silent = false) {
+  if (!threadId) return;
   try {
     const res = await fetch(`${API_BASE}/messages?thread_id=${encodeURIComponent(threadId)}`);
     const messages = await res.json();
-    renderMessages(messages);
+    if (threadId !== currentThreadId) return;
+    renderMessages(messages, silent);
   } catch (err) {
     console.error('Load messages error:', err);
   }
 }
 
-function renderMessages(messages) {
-  chatMessages.innerHTML = '';
-
+function renderMessages(messages, preserveScroll = false) {
   if (!messages || messages.length === 0) {
+    lastMessagesSig = '';
     chatMessages.innerHTML = `
       <div class="day-divider">Hôm nay</div>
       <div style="text-align:center; color:#72808e; font-size:13px; margin-top:20px;">
@@ -284,9 +357,17 @@ function renderMessages(messages) {
     return;
   }
 
-  chatMessages.innerHTML = `<div class="day-divider">Hôm nay</div>`;
-
   const sorted = [...messages].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+  const sig = currentThreadId + '||' + sorted.map(m => (m.id || '') + ':' + (m.content || '')).join('\x1e');
+  if (preserveScroll && sig === lastMessagesSig) {
+    return;
+  }
+  lastMessagesSig = sig;
+
+  const wasNearBottom = !preserveScroll || (chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight) < 80;
+  const prevScrollTop = chatMessages.scrollTop;
+
+  chatMessages.innerHTML = `<div class="day-divider">Hôm nay</div>`;
 
   sorted.forEach(m => {
     const isSelf = !!(m.isSelf ?? m.is_self);
@@ -309,8 +390,11 @@ function renderMessages(messages) {
     chatMessages.appendChild(bubble);
   });
 
-  // Auto scroll to bottom
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  if (wasNearBottom) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  } else {
+    chatMessages.scrollTop = prevScrollTop;
+  }
 }
 
 // --------------------------------------------------------------------------
@@ -353,8 +437,14 @@ async function sendMessage() {
     const result = await res.json();
     if (result.success) {
       tempBubble.querySelector('.bubble-meta').innerHTML = `<span>Vừa xong</span><span>✓✓</span>`;
-      // Reload thread snippet
-      setTimeout(loadThreads, 1000);
+      // Reload thread snippet & synced messages
+      setTimeout(() => {
+        lastMessagesSig = '';
+        loadThreads();
+        if (currentThreadId && !isSending) {
+          loadMessages(currentThreadId, true);
+        }
+      }, 600);
     } else {
       tempBubble.querySelector('.bubble-meta').innerHTML = `<span style="color:#e53935">Lỗi gửi: ${escapeHtml(result.error || 'Không rõ nguyên nhân')}</span>`;
     }
